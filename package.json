@@ -4,13 +4,26 @@
     "main": "index.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "dev": "concurrently \"npm run dev --prefix client\" \"npm run dev --prefix server\""
+        "dev": "concurrently \"npm run dev --prefix client\" \"npm run dev --prefix server\"",
+        "prepare": "husky install",
+        "lint": "eslint . --ext .js,.ts,.tsx",
+        "format": "prettier --write ."
+    },
+    "lint-staged": {
+        "*.{js,ts,tsx}": [
+            "eslint --fix",
+            "prettier --write"
+        ]
     },
     "keywords": [],
     "author": "",
     "license": "ISC",
     "description": "",
     "devDependencies": {
-        "concurrently": "^9.1.2"
+        "concurrently": "^9.1.2",
+        "eslint": "^9.26.0",
+        "husky": "^8.0.0",
+        "lint-staged": "^15.5.1",
+        "prettier": "^3.5.3"
     }
 }

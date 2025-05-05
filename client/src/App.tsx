@@ -13,6 +13,7 @@ function App() {
             .then((data) => {
                 console.log(data.message);
             });
+        console.log('git testt');
     };
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-800">
