@@ -15,7 +15,6 @@ export default [
             parserOptions: {
                 project: [
                     './client/tsconfig.app.json',
-                    './server/tsconfig.json',
                 ],
             },
             globals: {
