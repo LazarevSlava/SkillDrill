@@ -1,20 +1,20 @@
 name: Lint and Prettier Check
 
 on:
-    pull_request:
-        branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
-    lint:
-        runs-on: ubuntu-latest
+  lint:
+    runs-on: ubuntu-latest
 
-        steps:
-            - uses: actions/checkout@v3
-            - name: Use Node.js
-              uses: actions/setup-node@v3
-              with:
-                  node-version: 20
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
 
-            - run: npm ci
-            - run: npx eslint client server --ext js,ts,tsx
-            - run: npx prettier --check .
+      - run: npm ci
+      - run: npx eslint client server --ext js,ts,tsx
+      - run: npx prettier --check .
