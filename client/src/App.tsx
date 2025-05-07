@@ -13,7 +13,7 @@ function App() {
             .then((data) => {
                 console.log(data.message);
             });
-        console.log('git testt');
+        console.log('🧪 testing GitHub Actions');
     };
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-800">
