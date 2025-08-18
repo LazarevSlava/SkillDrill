@@ -1,0 +1,38 @@
+name: Deploy Frontend
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch: {}   # allows manual run from the Actions tab
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client   # build inside your client/ folder
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - run: npm ci
+      - run: npm run build           # expects output in client/dist/
+
+      - name: Add host key
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy via rsync over SSH
+        uses: burnett01/rsync-deployments@6.0
+        with:
+          switches: -avz --delete
+          path: dist/                               # local build folder (client/dist/)
+          remote_path: ${{ secrets.DEPLOY_PATH }}/  # e.g. /var/www/skilldrill/
+          remote_host: ${{ secrets.DEPLOY_HOST }}   # 49.12.110.251
+          remote_user: ${{ secrets.DEPLOY_USER }}   # deploy
+          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}# your private key contents
