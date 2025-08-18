@@ -28,7 +28,8 @@ jobs:
           ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
 
       - name: Deploy via rsync over SSH
-        uses: burnett01/rsync-deployments@6.0
+  uses: burnett01/rsync-deployments@v5.2
+
         with:
           switches: -avz --delete
           path: dist/                               # local build folder (client/dist/)
