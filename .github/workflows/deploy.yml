@@ -2,15 +2,16 @@ name: Deploy Frontend
 
 on:
   push:
-    branches: ["main"]
-  workflow_dispatch: {}   # allows manual run from the Actions tab
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: client   # build inside your client/ folder
+        working-directory: client
 
     steps:
       - uses: actions/checkout@v4
@@ -20,7 +21,7 @@ jobs:
           node-version: "20"
 
       - run: npm ci
-      - run: npm run build           # expects output in client/dist/
+      - run: npm run build   # соберёт client/dist/
 
       - name: Add host key
         run: |
@@ -28,12 +29,11 @@ jobs:
           ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
 
       - name: Deploy via rsync over SSH
-  uses: burnett01/rsync-deployments@v5.2
-
+        uses: Burnett01/rsync-deployments@v5.2
         with:
           switches: -avz --delete
-          path: dist/                               # local build folder (client/dist/)
-          remote_path: ${{ secrets.DEPLOY_PATH }}/  # e.g. /var/www/skilldrill/
-          remote_host: ${{ secrets.DEPLOY_HOST }}   # 49.12.110.251
-          remote_user: ${{ secrets.DEPLOY_USER }}   # deploy
-          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}# your private key contents
+          path: client/dist/                         # ВАЖНО: путь из корня репо
+          remote_path: ${{ secrets.DEPLOY_PATH }}/
+          remote_host: ${{ secrets.DEPLOY_HOST }}
+          remote_user: ${{ secrets.DEPLOY_USER }}
+          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
