@@ -21,7 +21,7 @@ jobs:
           node-version: "20"
 
       - run: npm ci
-      - run: npm run build   # соберёт client/dist/
+      - run: npm run build # соберёт client/dist/
 
       - name: Prep known_hosts
         run: |
