@@ -1,10 +1,10 @@
-// eslint.config.js (ESM, flat-config)
-import js from '@eslint/js';
-import globals from 'globals';
-import tseslint from 'typescript-eslint';
+// eslint.config.cjs — CommonJS, совместим с ESLint 9 flat-config и CI
+const js = require('@eslint/js');
+const globals = require('globals');
+const tseslint = require('typescript-eslint');
 
-export default [
-    // Игнор глобально
+module.exports = tseslint.config(
+    // Глобальные игноры
     {
         ignores: ['**/node_modules/**', '**/dist/**'],
     },
@@ -12,7 +12,10 @@ export default [
     // Базовые JS правила
     js.configs.recommended,
 
-    // Клиент: TS/TSX с type-aware правилами
+    // Базовые TS правила без type-check (быстро и не требует tsconfig)
+    ...tseslint.configs.recommended,
+
+    // Type-aware правила для клиента (используем оба tsconfig)
     {
         files: ['client/**/*.{ts,tsx}'],
         languageOptions: {
@@ -20,12 +23,11 @@ export default [
             sourceType: 'module',
             parser: tseslint.parser,
             parserOptions: {
-                // ВАЖНО: путь к tsconfig из корня репо
                 project: [
                     './client/tsconfig.json',
                     './client/tsconfig.app.json',
-                ], // если у тебя tsconfig.json — поменяй здесь
-                tsconfigRootDir: process.cwd(),
+                ],
+                tsconfigRootDir: __dirname, // считать пути от корня репо
             },
             globals: {
                 ...globals.browser,
@@ -39,7 +41,7 @@ export default [
         },
     },
 
-    // JS файлы (в т.ч. конфиги)
+    // JS/конфиги (node окружение)
     {
         files: ['**/*.{js,cjs,mjs}'],
         languageOptions: {
@@ -50,5 +52,5 @@ export default [
             },
         },
         rules: {},
-    },
-];
+    }
+);
