@@ -14,7 +14,7 @@ export default [
       sourceType: "module",
       parser: tseslint.parser,
       parserOptions: {
-        project: "./client/tsconfig.app.json",
+        project: "./tsconfig.app.json",
       },
       globals: {
         ...globals.browser,
