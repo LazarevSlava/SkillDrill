@@ -9,24 +9,27 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: client
 
     steps:
-      - name: Checkout repo
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+          cache: "npm"
+          cache-dependency-path: client/package-lock.json
 
-      - name: Install deps
+      - name: Install deps (client)
+        working-directory: client
         run: npm ci
+        env:
+          HUSKY: 0
 
-      - name: Build frontend
-        run: npm run build # соберёт client/dist/
+      - name: Build (client)
+        working-directory: client
+        run: npm run build
 
       - name: Prep known_hosts
         run: |
@@ -37,9 +40,8 @@ jobs:
         uses: Burnett01/rsync-deployments@7.0.2
         with:
           switches: -avz --delete
-          path: ./client/dist/ # билд папки client/dist
-          remote_path: /var/www/skilldrill/ # <-- тот самый root из nginx
+          path: ./client/dist/
+          remote_path: /var/www/skilldrill/
           remote_host: ${{ secrets.DEPLOY_HOST }}
           remote_user: ${{ secrets.DEPLOY_USER }}
           remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
-          # rsh: "ssh -p ${{ secrets.DEPLOY_PORT }}" # если порт не 22
