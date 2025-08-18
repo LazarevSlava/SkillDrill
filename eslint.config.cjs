@@ -52,5 +52,20 @@ module.exports = tseslint.config(
             },
         },
         rules: {},
+    },
+    // JS/конфиги (node окружение)
+    {
+        files: ['**/*.{js,cjs,mjs}'],
+        languageOptions: {
+            ecmaVersion: 'latest',
+            sourceType: 'module',
+            globals: {
+                ...globals.node,
+            },
+        },
+        rules: {
+            // Разрешаем require() в JS-файлах
+            '@typescript-eslint/no-require-imports': 'off',
+        },
     }
 );
