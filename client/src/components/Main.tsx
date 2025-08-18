@@ -1,3 +1,5 @@
+import RegisterForm from './RegisterForm';
+
 export default function Main() {
     const handleServer = () => {
         fetch('http://localhost:3001/api/hello', {
@@ -24,6 +26,7 @@ export default function Main() {
             >
                 Click me
             </button>
+            <RegisterForm />
         </main>
     );
 }
