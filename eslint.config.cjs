@@ -1,12 +1,12 @@
 // eslint.config.cjs — CommonJS, совместим с ESLint 9 flat-config и CI
-const js = require("@eslint/js");
-const globals = require("globals");
-const tseslint = require("typescript-eslint");
+const js = require('@eslint/js');
+const globals = require('globals');
+const tseslint = require('typescript-eslint');
 
 module.exports = tseslint.config(
   // Глобальные игноры
   {
-    ignores: ["**/node_modules/**", "**/dist/**"],
+    ignores: ['**/node_modules/**', '**/dist/**'],
   },
 
   // Базовые JS правила
@@ -17,13 +17,13 @@ module.exports = tseslint.config(
 
   // Type-aware правила для клиента (используем оба tsconfig)
   {
-    files: ["client/**/*.{ts,tsx}"],
+    files: ['client/**/*.{ts,tsx}'],
     languageOptions: {
-      ecmaVersion: "latest",
-      sourceType: "module",
+      ecmaVersion: 'latest',
+      sourceType: 'module',
       parser: tseslint.parser,
       parserOptions: {
-        project: ["./client/tsconfig.json", "./client/tsconfig.app.json"],
+        project: ['./client/tsconfig.json', './client/tsconfig.app.json'],
         tsconfigRootDir: __dirname, // считать пути от корня репо
       },
       globals: {
@@ -31,7 +31,7 @@ module.exports = tseslint.config(
       },
     },
     plugins: {
-      "@typescript-eslint": tseslint.plugin,
+      '@typescript-eslint': tseslint.plugin,
     },
     rules: {
       // твои правила при желании
@@ -40,10 +40,10 @@ module.exports = tseslint.config(
 
   // JS/конфиги (node окружение)
   {
-    files: ["**/*.{js,cjs,mjs}"],
+    files: ['**/*.{js,cjs,mjs}'],
     languageOptions: {
-      ecmaVersion: "latest",
-      sourceType: "module",
+      ecmaVersion: 'latest',
+      sourceType: 'module',
       globals: {
         ...globals.node,
       },
@@ -52,17 +52,17 @@ module.exports = tseslint.config(
   },
   // JS/конфиги (node окружение)
   {
-    files: ["**/*.{js,cjs,mjs}"],
+    files: ['**/*.{js,cjs,mjs}'],
     languageOptions: {
-      ecmaVersion: "latest",
-      sourceType: "module",
+      ecmaVersion: 'latest',
+      sourceType: 'module',
       globals: {
         ...globals.node,
       },
     },
     rules: {
       // Разрешаем require() в JS-файлах
-      "@typescript-eslint/no-require-imports": "off",
+      '@typescript-eslint/no-require-imports': 'off',
     },
-  },
+  }
 );
