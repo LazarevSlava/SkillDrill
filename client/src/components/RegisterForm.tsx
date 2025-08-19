@@ -1,5 +1,5 @@
-import { useForm } from 'react-hook-form';
-import { useState } from 'react';
+import { useForm } from "react-hook-form";
+import { useState } from "react";
 
 type FormValues = {
   email: string;
@@ -8,7 +8,7 @@ type FormValues = {
 };
 
 export default function RegisterForm() {
-  const [mode, setMode] = useState<'signin' | 'signup'>('signup');
+  const [mode, setMode] = useState<"signin" | "signup">("signup");
 
   const {
     register,
@@ -30,17 +30,17 @@ export default function RegisterForm() {
       <div className="flex justify-center mb-6">
         <button
           className={`px-4 py-2 rounded-l-lg ${
-            mode === 'signin' ? 'bg-blue-600 text-white' : 'bg-gray-200'
+            mode === "signin" ? "bg-blue-600 text-white" : "bg-gray-200"
           }`}
-          onClick={() => setMode('signin')}
+          onClick={() => setMode("signin")}
         >
           Sign In
         </button>
         <button
           className={`px-4 py-2 rounded-r-lg ${
-            mode === 'signup' ? 'bg-blue-600 text-white' : 'bg-gray-200'
+            mode === "signup" ? "bg-blue-600 text-white" : "bg-gray-200"
           }`}
-          onClick={() => setMode('signup')}
+          onClick={() => setMode("signup")}
         >
           Sign Up
         </button>
@@ -48,19 +48,19 @@ export default function RegisterForm() {
 
       <div className="flex flex-col gap-3 mb-6">
         <button
-          onClick={() => handleOAuth('google')}
+          onClick={() => handleOAuth("google")}
           className="py-2 px-4 border rounded-lg hover:bg-gray-100"
         >
           Continue with Google
         </button>
         <button
-          onClick={() => handleOAuth('github')}
+          onClick={() => handleOAuth("github")}
           className="py-2 px-4 border rounded-lg hover:bg-gray-100"
         >
           Continue with GitHub
         </button>
         <button
-          onClick={() => handleOAuth('apple')}
+          onClick={() => handleOAuth("apple")}
           className="py-2 px-4 border rounded-lg hover:bg-gray-100"
         >
           Continue with Apple
@@ -77,19 +77,19 @@ export default function RegisterForm() {
         <input
           type="email"
           placeholder="Email"
-          {...register('email', { required: 'Email is required' })}
+          {...register("email", { required: "Email is required" })}
           className="border px-4 py-2 rounded-lg"
         />
         {errors.email && (
           <span className="text-red-500 text-sm">{errors.email.message}</span>
         )}
 
-        {mode === 'signup' && (
+        {mode === "signup" && (
           <>
             <input
               type="text"
               placeholder="Username"
-              {...register('username')}
+              {...register("username")}
               className="border px-4 py-2 rounded-lg"
             />
           </>
@@ -98,8 +98,8 @@ export default function RegisterForm() {
         <input
           type="password"
           placeholder="Password"
-          {...register('password', {
-            required: 'Password is required',
+          {...register("password", {
+            required: "Password is required",
           })}
           className="border px-4 py-2 rounded-lg"
         />
@@ -113,7 +113,7 @@ export default function RegisterForm() {
           type="submit"
           className="bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
         >
-          {mode === 'signup' ? 'Sign Up' : 'Sign In'}
+          {mode === "signup" ? "Sign Up" : "Sign In"}
         </button>
       </form>
     </div>

@@ -1,13 +1,13 @@
-import RegisterForm from './RegisterForm';
+import RegisterForm from "./RegisterForm";
 
 export default function Main() {
   const handleServer = () => {
-    fetch('http://localhost:3001/api/hello', {
-      method: 'POST',
+    fetch("http://localhost:3001/api/hello", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify({ name: 'Slava' }),
+      body: JSON.stringify({ name: "Slava" }),
     })
       .then((res) => res.json())
       .then((data) => {
