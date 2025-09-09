@@ -1,12 +1,8 @@
 import { useState } from "react";
 import Header from "../components/Header";
+import Main from "../components/Main";
 import Footer from "../components/Footer";
 import Modal from "../components/Modal";
-import Hero from "../components/Hero";
-import HowItWorks from "../components/HowItWorks";
-import Features from "../components/Features";
-import Pricing from "../components/Pricing";
-import FAQ from "../components/FAQ";
 import RegisterForm from "../forms/RegisterForm";
 
 export default function LandingPage() {
@@ -20,44 +16,22 @@ export default function LandingPage() {
         onOpenLogin={() => setOpenLogin(true)}
       />
 
-      <main>
-        <Hero onOpenSignup={() => setOpenSignup(true)} />
-        <HowItWorks />
-        <Features />
-        <Pricing onOpenSignup={() => setOpenSignup(true)} />
-        <FAQ />
-
-        <section className="bg-gradient-to-r from-[var(--color-deep-blue)] to-[var(--color-gray-blue)]">
-          <div className="section text-center text-white">
-            <h3 className="text-3xl font-bold">
-              Готов улучшить шансы на оффер?
-            </h3>
-            <p className="mt-2 opacity-90">
-              Запусти первое интервью — займёт 15 минут.
-            </p>
-            <button
-              onClick={() => setOpenSignup(true)}
-              className="btn btn-primary mt-6"
-            >
-              Начать бесплатно
-            </button>
-          </div>
-        </section>
-      </main>
+      <Main
+        onOpenSignup={() => setOpenSignup(true)}
+        onOpenLogin={() => setOpenLogin(true)}
+      />
 
       <Footer />
 
+      {/* Signup */}
       <Modal
         open={openSignup}
         onClose={() => setOpenSignup(false)}
         title="Создать аккаунт"
       >
-        <RegisterForm
-          onSuccess={() => {
-            setOpenSignup(false);
-            location.href = "/app";
-          }}
-        />
+        {/* Если твоя форма поддерживает onSuccess/mode — можно так: 
+            <RegisterForm mode="signup" onSuccess={() => { setOpenSignup(false); location.href = "/app"; }} /> */}
+        <RegisterForm />
         <p
           className="mt-3 text-center text-sm"
           style={{ color: "var(--color-gray-blue)" }}
@@ -75,14 +49,10 @@ export default function LandingPage() {
         </p>
       </Modal>
 
+      {/* Login */}
       <Modal open={openLogin} onClose={() => setOpenLogin(false)} title="Войти">
-        <RegisterForm
-          mode="signup"
-          onSuccess={() => {
-            setOpenLogin(false);
-            location.href = "/app";
-          }}
-        />
+        {/* <RegisterForm mode="login" onSuccess={() => { setOpenLogin(false); location.href = "/app"; }} /> */}
+        <RegisterForm />
         <p
           className="mt-3 text-center text-sm"
           style={{ color: "var(--color-gray-blue)" }}
