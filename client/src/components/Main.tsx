@@ -1,32 +1,87 @@
-import RegisterForm from "./RegisterForm";
+// src/components/Main.tsx
+import { useState } from "react";
+import Hero from "./Hero";
+import HowItWorks from "./HowItWorks";
+import Features from "./Features";
+import Pricing from "./Pricing";
+import FAQ from "./FAQ";
+import Modal from "./Modal";
+import RegisterForm from "../forms/RegisterForm";
 
 export default function Main() {
-  const handleServer = () => {
-    fetch("http://localhost:4000/api/users", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ name: "Slava139", password: "124444443456" }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        console.log(data);
-      });
-  };
+  const [openSignup, setOpenSignup] = useState(false);
+  const [openLogin, setOpenLogin] = useState(false);
+
   return (
-    <main className="flex-grow overflow-auto py-10 px-6">
-      <h2 className="text-3xl font-bold mb-4">Welcome to SkillDrill</h2>
-      <p className="text-gray-700 dark:text-gray-300">
-        Here will be an interactiv platform
-      </p>
-      <button
-        onClick={handleServer}
-        className="px-6 py-2 bg-red-600 text-white font-semibold rounded hover:bg-blue-700 transition"
+    <main className="bg-[var(--color-white)] text-[var(--color-dark-gray)]">
+      {/* Контент лендинга */}
+      <Hero onOpenSignup={() => setOpenSignup(true)} />
+      <HowItWorks />
+      <Features />
+      <Pricing onOpenSignup={() => setOpenSignup(true)} />
+      <FAQ />
+
+      {/* Финальный CTA */}
+      <section className="bg-gradient-to-r from-[var(--color-deep-blue)] to-[var(--color-gray-blue)]">
+        <div className="section text-center text-white">
+          <h3 className="text-3xl font-bold">Готов улучшить шансы на оффер?</h3>
+          <p className="mt-2 opacity-90">
+            Запусти первое интервью — займёт 15 минут.
+          </p>
+          <button
+            onClick={() => setOpenSignup(true)}
+            className="btn btn-primary mt-6"
+          >
+            Начать бесплатно
+          </button>
+        </div>
+      </section>
+
+      {/* Модалки аутентификации */}
+      <Modal
+        open={openSignup}
+        onClose={() => setOpenSignup(false)}
+        title="Создать аккаунт"
       >
-        Click me
-      </button>
-      <RegisterForm />
+        {/* Если твой RegisterForm поддерживает onSuccess/mode — раскомментируй: */}
+        {/* <RegisterForm mode="signup" onSuccess={() => { setOpenSignup(false); location.href = "/app"; }} /> */}
+        <RegisterForm />
+        <p
+          className="mt-3 text-center text-sm"
+          style={{ color: "var(--color-gray-blue)" }}
+        >
+          Уже есть аккаунт?{" "}
+          <button
+            onClick={() => {
+              setOpenSignup(false);
+              setOpenLogin(true);
+            }}
+            className="underline font-semibold text-[var(--color-deep-blue)]"
+          >
+            Войти
+          </button>
+        </p>
+      </Modal>
+
+      <Modal open={openLogin} onClose={() => setOpenLogin(false)} title="Войти">
+        {/* <RegisterForm mode="login" onSuccess={() => { setOpenLogin(false); location.href = "/app"; }} /> */}
+        <RegisterForm />
+        <p
+          className="mt-3 text-center text-sm"
+          style={{ color: "var(--color-gray-blue)" }}
+        >
+          Нет аккаунта?{" "}
+          <button
+            onClick={() => {
+              setOpenLogin(false);
+              setOpenSignup(true);
+            }}
+            className="underline font-semibold text-[var(--color-deep-blue)]"
+          >
+            Зарегистрироваться
+          </button>
+        </p>
+      </Modal>
     </main>
   );
 }

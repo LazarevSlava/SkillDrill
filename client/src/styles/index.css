@@ -1,0 +1,130 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-deep-blue: #3b5a72;
+  --color-light-blue: #afc2d5;
+  --color-white: #ffffff;
+  --color-yellow: #efb94c;
+  --color-gray-blue: #6e8a9f;
+  --color-dark-gray: #2b2b2b;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+}
+
+/* ===== Component presets (no global button styles) ===== */
+@layer components {
+  /* Секция-обёртка для блоков лендинга */
+  .section {
+    @apply mx-auto max-w-7xl px-6 py-16;
+  }
+
+  /* Карточка/блок */
+  .card {
+    @apply rounded-3xl bg-white shadow-sm border;
+    border-color: color-mix(in oklab, var(--color-light-blue), transparent 60%);
+  }
+  .dark .card {
+    @apply bg-neutral-900 border-neutral-800;
+  }
+
+  /* Кнопки по БЭМ-классам, без влияния на <button> глобально */
+  .btn {
+    @apply inline-flex items-center justify-center rounded-2xl px-6 py-3 font-semibold shadow transition;
+  }
+  .btn-primary {
+    background-color: var(--color-yellow);
+    color: var(--color-dark-gray);
+  }
+  .btn-primary:hover {
+    filter: brightness(0.95);
+  }
+  .btn-outline {
+    @apply border;
+    border-color: var(--color-deep-blue);
+    color: var(--color-deep-blue);
+  }
+  .btn-outline:hover {
+    background-color: var(--color-deep-blue);
+    color: white;
+  }
+
+  /* Навигация/ссылки */
+  .nav-link {
+    @apply inline-flex items-center gap-2 text-sm font-medium;
+    color: var(--color-deep-blue);
+  }
+  .nav-link:hover {
+    text-decoration: underline;
+  }
+
+  /* Хиро-заголовок и подзаголовок */
+  .hero-title {
+    @apply text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight;
+    color: var(--color-dark-gray);
+  }
+  .hero-subtitle {
+    @apply mt-4 text-lg md:text-xl;
+    color: var(--color-gray-blue);
+  }
+  .dark .hero-title {
+    color: var(--color-white);
+  }
+  .dark .hero-subtitle {
+    color: color-mix(in oklab, var(--color-light-blue), transparent 30%);
+  }
+
+  /* Плашка/бейдж (например, “New”, “Beta”) */
+  .badge {
+    @apply inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium;
+    background: color-mix(in oklab, var(--color-light-blue), transparent 70%);
+    color: var(--color-deep-blue);
+  }
+
+  /* Поля форм (для регистрации/CTA) */
+  .input {
+    @apply w-full rounded-xl border px-4 py-3 text-base outline-none ring-0;
+    border-color: color-mix(in oklab, var(--color-light-blue), transparent 60%);
+  }
+  .input:focus {
+    @apply border-transparent ring-2;
+    --tw-ring-color: var(--color-deep-blue);
+  }
+
+  /* Фоновая обёртка для страницы/секции (легкая художественная заливка) */
+  .app-bg {
+    background:
+      radial-gradient(
+        1200px 800px at 80% -10%,
+        color-mix(in oklab, var(--color-yellow), transparent 80%),
+        transparent
+      ),
+      radial-gradient(
+        1000px 600px at -10% 20%,
+        color-mix(in oklab, var(--color-light-blue), transparent 70%),
+        transparent
+      ),
+      var(--color-white);
+  }
+  .dark .app-bg {
+    background:
+      radial-gradient(
+        1200px 800px at 80% -10%,
+        color-mix(in oklab, var(--color-yellow), transparent 85%),
+        transparent
+      ),
+      radial-gradient(
+        1000px 600px at -10% 20%,
+        color-mix(in oklab, var(--color-deep-blue), transparent 60%),
+        transparent
+      ),
+      #0b0d10;
+  }
+}
