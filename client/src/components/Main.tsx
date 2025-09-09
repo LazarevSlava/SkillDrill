@@ -2,16 +2,16 @@ import RegisterForm from "./RegisterForm";
 
 export default function Main() {
   const handleServer = () => {
-    fetch("http://localhost:3001/api/hello", {
+    fetch("http://localhost:4000/api/users", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ name: "Slava" }),
+      body: JSON.stringify({ name: "Slava139", password: "124444443456" }),
     })
       .then((res) => res.json())
       .then((data) => {
-        console.log(data.message);
+        console.log(data);
       });
   };
   return (
