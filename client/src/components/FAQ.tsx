@@ -6,11 +6,11 @@ export default function FAQ() {
     },
     {
       q: "Какие темы доступны?",
-      a: "JS, React, Python — базово. Далее добавим Node.js, системы, алгоритмы.",
+      a: "JS, React, Python, Node.js.",
     },
     {
       q: "Есть ли бесплатный доступ?",
-      a: "Да, 1–2 интервью бесплатно без привязки карты.",
+      a: "Да, 2 интервью бесплатно без привязки карты.",
     },
     {
       q: "Где хранится прогресс?",
@@ -21,7 +21,7 @@ export default function FAQ() {
   return (
     <section
       id="faq"
-      className="bg-[color-mix(in_okrgb,var(--color-light-blue)_/20%,white)]"
+      className="bg-[color-mix(in_oklab,var(--color-light-blue)_20%,white)]"
     >
       <div className="section">
         <h2
@@ -32,15 +32,11 @@ export default function FAQ() {
         </h2>
 
         <div
-          className="mt-6 divide-y rounded-3xl border bg-white"
-          style={
-            {
-              borderColor:
-                "color-mix(in oklab, var(--color-light-blue), transparent 40%)",
-              divideColor:
-                "color-mix(in oklab, var(--color-light-blue), transparent 40%)",
-            } as React.CSSProperties
-          }
+          className="
+            mt-6 rounded-3xl border bg-white divide-y
+            [border-color:color-mix(in_oklab,var(--color-light-blue),transparent_40%)]
+            divide-[color:color-mix(in_oklab,var(--color-light-blue),transparent_40%)]
+          "
         >
           {qa.map((item, i) => (
             <details key={i} className="group p-6" open={i === 0}>
@@ -55,6 +51,7 @@ export default function FAQ() {
                     borderColor: "var(--color-light-blue)",
                     color: "var(--color-gray-blue)",
                   }}
+                  aria-hidden="true"
                 >
                   <svg
                     viewBox="0 0 24 24"
@@ -66,6 +63,7 @@ export default function FAQ() {
                   </svg>
                 </span>
               </summary>
+
               <p className="mt-3" style={{ color: "var(--color-gray-blue)" }}>
                 {item.a}
               </p>
