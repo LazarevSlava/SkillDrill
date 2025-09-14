@@ -10,7 +10,7 @@ export type RegisterFormProps = {
   mode?: Mode;
   onSuccess?: () => void; // если не задан, делаем navigate('/app')
   stub?: StubMode; // переопределяет .env
-  showBottomToggle?: boolean; // ПО УМОЛЧАНИЮ false — чтобы избежать «дублирования»
+  showBottomToggle?: boolean; // по умолчанию false
 };
 
 type FormValues = {
@@ -18,6 +18,34 @@ type FormValues = {
   email: string;
   password: string;
 };
+
+// ---- Типы API-ответов (контракт с бэком) ----
+type ApiUser = {
+  id: string;
+  username: string;
+  email: string;
+};
+
+type ApiOk<T> = {
+  ok: true;
+  data: T;
+};
+
+type ApiErrCode =
+  | "name_taken"
+  | "email_taken"
+  | "password_too_short"
+  | "invalid_credentials"
+  | "validation_error"
+  | "server_error";
+
+type ApiError = {
+  ok: false;
+  error: { code: ApiErrCode; message: string };
+};
+
+type SignupResponse = ApiOk<{ user: ApiUser }> | ApiError;
+type LoginResponse = ApiOk<{ user: ApiUser }> | ApiError;
 
 // env без any
 const viteEnv = (
@@ -31,11 +59,29 @@ const ENV_STUB: StubMode = (viteEnv?.VITE_AUTH_STUB ?? "off") as StubMode;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+// Небольшой helper: единый fetch с JSON + куки
+async function jsonFetch<T>(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+): Promise<T> {
+  const res = await fetch(input, {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      ...(init?.headers || {}),
+    },
+    credentials: "include", // <— ВАЖНО: cookie-based auth
+  });
+  // Бэкенд ВСЕГДА отвечает JSON (и при ошибке тоже)
+  const data = (await res.json().catch(() => ({}))) as T;
+  return data;
+}
+
 export default function RegisterForm({
   mode: initialMode = "signup",
   onSuccess,
   stub,
-  showBottomToggle = false, // <— по умолчанию отключено, чтобы не было «повтора»
+  showBottomToggle = false,
 }: RegisterFormProps) {
   const navigate = useNavigate();
   const [mode, setMode] = useState<Mode>(initialMode);
@@ -51,7 +97,6 @@ export default function RegisterForm({
     defaultValues: { username: "", email: "", password: "" },
   });
 
-  // единый класс для инпутов
   const inputClass =
     "w-full rounded-xl border px-4 py-2 outline-none " +
     "border-[color:var(--color-light-blue)] " +
@@ -67,13 +112,31 @@ export default function RegisterForm({
   const usernameRequired = useMemo(() => mode === "signup", [mode]);
   const stubMode: StubMode = stub ?? ENV_STUB;
 
-  const onSuccessOrGoApp = () => {
-    (onSuccess ?? (() => navigate("/app")))();
-  };
+  const onSuccessOrGoApp = () => (onSuccess ?? (() => navigate("/app")))();
 
   const simulateSuccess = async () => {
     await sleep(450);
     onSuccessOrGoApp();
+  };
+
+  const mapErrorCodeToMessage = (
+    code?: ApiErrCode,
+    fallback = "Ошибка сервера",
+  ) => {
+    switch (code) {
+      case "name_taken":
+        return "Это имя уже занято";
+      case "email_taken":
+        return "Этот e-mail уже используется";
+      case "password_too_short":
+        return "Слишком короткий пароль (мин. 6 символов)";
+      case "invalid_credentials":
+        return "Неверный e-mail или пароль";
+      case "validation_error":
+        return "Некорректные данные формы";
+      default:
+        return fallback;
+    }
   };
 
   const onSubmit = async (data: FormValues) => {
@@ -87,69 +150,66 @@ export default function RegisterForm({
       }
 
       if (mode === "signup") {
-        const res = await fetch(`${API_BASE}/api/users`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: data.username?.trim(),
-            password: data.password,
-            // email: data.email?.trim(), // включишь, когда бэк будет ждать email
-          }),
-        });
+        const payload = await jsonFetch<SignupResponse>(
+          `${API_BASE}/api/auth/signup`,
+          {
+            method: "POST",
+            body: JSON.stringify({
+              username: data.username?.trim(),
+              email: data.email?.trim(),
+              password: data.password,
+            }),
+          },
+        );
 
-        const payload: unknown = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          const errCode = (payload as { error?: string } | undefined)?.error;
-          const msg =
-            errCode === "name_taken"
-              ? "Это имя уже занято"
-              : errCode === "password_too_short"
-                ? "Слишком короткий пароль (мин. 6 символов)"
-                : "Ошибка сервера. Попробуй ещё раз";
-
+        if (!("ok" in payload) || !payload.ok) {
           if (stubMode === "fallback") {
             console.warn(
-              "[RegisterForm] AUTH_STUB=fallback → API ошибка, имитируем успех",
+              "[RegisterForm] fallback → signup ошибка, имитируем успех",
             );
             await simulateSuccess();
             return;
           }
+          const msg = mapErrorCodeToMessage(
+            payload?.error?.code,
+            "Ошибка регистрации",
+          );
           throw new Error(msg);
         }
       } else {
-        const res = await fetch(`${API_BASE}/api/login`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: data.email?.trim(),
-            password: data.password,
-          }),
-        });
+        const payload = await jsonFetch<LoginResponse>(
+          `${API_BASE}/api/auth/login`,
+          {
+            method: "POST",
+            body: JSON.stringify({
+              email: data.email?.trim(),
+              password: data.password,
+            }),
+          },
+        );
 
-        const payload: unknown = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          const errCode = (payload as { error?: string } | undefined)?.error;
-          const msg =
-            errCode === "invalid_credentials"
-              ? "Неверный логин или пароль"
-              : "Ошибка входа. Попробуй ещё раз";
-
+        if (!("ok" in payload) || !payload.ok) {
           if (stubMode === "fallback") {
             console.warn(
-              "[RegisterForm] AUTH_STUB=fallback → API ошибка, имитируем успех",
+              "[RegisterForm] fallback → login ошибка, имитируем успех",
             );
             await simulateSuccess();
             return;
           }
+          const msg = mapErrorCodeToMessage(
+            payload?.error?.code,
+            "Ошибка входа",
+          );
           throw new Error(msg);
         }
       }
 
+      // если всё ок — кука уже установлена бэкендом
       onSuccessOrGoApp();
     } catch (e: unknown) {
       if (stubMode === "fallback") {
         console.warn(
-          "[RegisterForm] AUTH_STUB=fallback → сеть/исключение, имитируем успех",
+          "[RegisterForm] fallback → исключение/сеть, имитируем успех",
         );
         await simulateSuccess();
       } else {
@@ -162,7 +222,7 @@ export default function RegisterForm({
 
   return (
     <div className="mx-auto max-w-md rounded-2xl bg-[color:var(--color-white)] p-6 shadow-md">
-      {/* Переключатель режимов (вверху — основной, чтобы НЕ дублировать снизу) */}
+      {/* Верхний переключатель режимов */}
       <div className="mb-6 flex justify-center">
         <button
           type="button"
@@ -295,7 +355,7 @@ export default function RegisterForm({
         </button>
       </form>
 
-      {/* НИЖНИЙ переключатель — по желанию. По умолчанию скрыт, чтобы не дублировать. */}
+      {/* Нижний переключатель — опционально */}
       {showBottomToggle && (
         <p className="mt-3 text-center text-sm text-[color:var(--color-gray-blue)]">
           {mode === "signup" ? (
