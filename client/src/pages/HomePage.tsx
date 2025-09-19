@@ -1,13 +1,18 @@
-import Footer from "../components/Footer";
+import { useCallback, useState } from "react";
 import Header from "../components/Header";
 import Main from "../components/Main";
 
 export default function HomePage() {
+  const [, setOpenSignup] = useState(false);
+  const [, setOpenLogin] = useState(false);
+
+  const handleOpenSignup = useCallback(() => setOpenSignup(true), []);
+  const handleOpenLogin = useCallback(() => setOpenLogin(true), []);
+
   return (
-    <div className="flex flex-col h-full">
-      <Header />
-      <Main />
-      <Footer />
-    </div>
+    <>
+      <Header onOpenSignup={handleOpenSignup} onOpenLogin={handleOpenLogin} />
+      <Main onOpenSignup={handleOpenSignup} />
+    </>
   );
 }
