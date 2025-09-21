@@ -1,74 +1,93 @@
 // client/src/pages/Setup/Steps/PreferencesStep.tsx
-import { useSetupForm } from "../../../features/setup/useSetupForm";
-import { Link } from "react-router-dom";
+import { useFormContext } from "react-hook-form";
+import { useNavigate, Link, useOutletContext } from "react-router-dom";
+import type { SetupForm } from "../../../features/setup/useSetupForm";
+import { TONES, FOCUSES } from "../../../features/setup/useSetupForm";
 
-const tones = ["ty", "vy"] as const;
-const focuses = ["algorithms", "system", "frameworks"] as const;
+type Ctx = { go: (to: string) => void };
 
 export default function PreferencesStep() {
-  const { values, update } = useSetupForm();
+  const { register, trigger } = useFormContext<SetupForm>();
+  const nav = useNavigate();
+  const { go } = useOutletContext<Ctx>();
+
+  async function next() {
+    const ok = await trigger(["tone", "focus", "voice"]);
+    if (ok) (go ?? nav)("/setup/review");
+  }
 
   return (
-    <div className="space-y-6">
-      <section>
-        <div className="mb-2 font-medium">Обращение</div>
-        <Row
-          options={tones}
-          value={values.tone}
-          onSelect={(v) => update("tone", v)}
-        />
-      </section>
+    <form
+      className="space-y-8"
+      onSubmit={(e) => {
+        e.preventDefault();
+        void next();
+      }}
+    >
+      <section className="grid gap-6 md:grid-cols-3">
+        {/* tone */}
+        <div>
+          <div className="mb-2 font-medium">Обращение</div>
+          <div className="flex flex-wrap gap-2">
+            {TONES.map((t) => (
+              <label
+                key={t}
+                className="px-3 py-1 rounded-2xl border cursor-pointer"
+              >
+                <input
+                  type="radio"
+                  value={t}
+                  {...register("tone")}
+                  className="mr-2"
+                />
+                {t}
+              </label>
+            ))}
+          </div>
+        </div>
 
-      <section>
-        <div className="mb-2 font-medium">Акцент</div>
-        <Row
-          options={focuses}
-          value={values.focus}
-          onSelect={(v) => update("focus", v)}
-        />
-      </section>
+        {/* focus */}
+        <div>
+          <div className="mb-2 font-medium">Акцент</div>
+          <div className="flex flex-wrap gap-2">
+            {FOCUSES.map((f) => (
+              <label
+                key={f}
+                className="px-3 py-1 rounded-2xl border cursor-pointer"
+              >
+                <input
+                  type="radio"
+                  value={f}
+                  {...register("focus")}
+                  className="mr-2"
+                />
+                {f}
+              </label>
+            ))}
+          </div>
+        </div>
 
-      <label className="inline-flex items-center gap-2">
-        <input
-          type="checkbox"
-          checked={values.voice}
-          onChange={(e) => update("voice", e.target.checked)}
-        />
-        <span>Голос + текст</span>
-      </label>
+        {/* voice */}
+        <div className="flex items-end">
+          <label className="inline-flex items-center gap-2">
+            <input type="checkbox" {...register("voice")} />
+            <span>Голос + текст</span>
+          </label>
+        </div>
+      </section>
 
       <div className="flex justify-between">
         <Link to="/setup/session" className="px-4 py-2 rounded-lg border">
-          Назад
+          ← Назад
         </Link>
-        <Link to="/setup/review" className="px-4 py-2 rounded-lg border">
-          Далее
-        </Link>
-      </div>
-    </div>
-  );
-}
-
-function Row<T extends string>({
-  options,
-  value,
-  onSelect,
-}: {
-  options: readonly T[];
-  value: T;
-  onSelect: (v: T) => void;
-}) {
-  return (
-    <div className="flex flex-wrap gap-2">
-      {options.map((o) => (
         <button
-          key={o}
-          onClick={() => onSelect(o)}
-          className={`px-3 py-1 rounded-2xl border ${o === value ? "bg-blue-50" : ""}`}
+          type="submit"
+          className="px-4 py-2 rounded-lg border"
+          style={{ background: "var(--color-yellow)" }}
         >
-          {o}
+          Далее →
         </button>
-      ))}
-    </div>
+      </div>
+    </form>
   );
 }

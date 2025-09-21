@@ -1,3 +1,4 @@
+// client/src/pages/Setup/Steps/SetupFormPage.tsx
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
@@ -38,7 +39,7 @@ const DEFAULTS: SetupFormValues = {
   voice: true,
 };
 
-// Простая схема валидации
+// Схема валидации
 const schema = z.object({
   topics: z.array(z.enum(ALL_TOPICS)).min(1, "Выберите хотя бы одну тему"),
   duration: z.coerce
@@ -51,39 +52,40 @@ const schema = z.object({
   voice: z.boolean(),
 });
 
-type Form = SetupFormValues;
+// Типы от схемы
+type Form = z.output<typeof schema>; // после резолвера (duration: 15|30|60)
+type FormInput = z.input<typeof schema>; // сырой ввод (duration может быть строкой)
 
 export default function SetupFormPage() {
   const nav = useNavigate();
 
-  // подхватываем черновик из localStorage
-  const draft = readSetupDraft();
-  const defaultValues: Form = draft ? { ...DEFAULTS, ...draft } : DEFAULTS;
+  // подхватываем черновик из localStorage (в input-виде)
+  const draft = readSetupDraft<FormInput>();
+  const defaultValues: FormInput = (draft
+    ? { ...DEFAULTS, ...draft }
+    : DEFAULTS) as unknown as FormInput;
 
+  // Важно: <FormInput, undefined, Form>
   const { register, handleSubmit, watch, control, setValue, formState } =
-    useForm<Form>({
+    useForm<FormInput, undefined, Form>({
       defaultValues,
-      resolver: zodResolver(schema as any),
+      resolver: zodResolver(schema), // без дженериков/any
       mode: "onChange",
     });
-  // 1) Таймер для дебаунса
-  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // 2) Чтобы не писать одинаковые данные (мелкая оптимизация)
+  // --- ДЕБАУНС АВТОСЕЙВА ---
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSavedRef = useRef<string>("");
-  // Автосейв черновика в localStorage при любых изменениях
+
   useEffect(() => {
     const sub = watch((values) => {
-      // Сбрасываем прошлый таймер
-      if (saveTimerRef.current) {
-        clearTimeout(saveTimerRef.current);
-      }
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
 
-      // Стартуем новый (500 мс )
       saveTimerRef.current = setTimeout(() => {
         const serialized = JSON.stringify(values);
         if (serialized !== lastSavedRef.current) {
-          writeSetupDraft(values as SetupFormValues);
+          // пишем как есть (input-вид) — потом схема всё нормализует
+          writeSetupDraft(values);
           lastSavedRef.current = serialized;
         }
       }, 500);
@@ -97,7 +99,7 @@ export default function SetupFormPage() {
 
   function onSubmit(values: Form) {
     // тут позже будет POST /api/setup
-    writeSetupDraft(values); //temporal for use values
+    writeSetupDraft(values); // временно сохраним финальные значения
     markSetupCompleted();
     clearSetupDraft();
     nav("/dashboard");
@@ -139,7 +141,9 @@ export default function SetupFormPage() {
                   key={t}
                   type="button"
                   onClick={() => toggleTopic(t)}
-                  className={`px-3 py-1 rounded-2xl border ${selected ? "bg-yellow-100 border-yellow-400" : ""}`}
+                  className={`px-3 py-1 rounded-2xl border ${
+                    selected ? "bg-yellow-100 border-yellow-400" : ""
+                  }`}
                 >
                   {t}
                 </button>
@@ -272,7 +276,7 @@ export default function SetupFormPage() {
                 render={({ field }) => (
                   <input
                     type="checkbox"
-                    checked={field.value}
+                    checked={!!field.value}
                     onChange={(e) => field.onChange(e.target.checked)}
                   />
                 )}

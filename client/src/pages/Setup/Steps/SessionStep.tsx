@@ -1,86 +1,110 @@
-import { useSetupForm } from "../../../features/setup/useSetupForm";
-import { Link } from "react-router-dom";
+// client/src/pages/Setup/Steps/SessionStep.tsx
+import { useFormContext } from "react-hook-form";
+import { useNavigate, Link, useOutletContext } from "react-router-dom";
+import type { SetupForm } from "../../../features/setup/useSetupForm";
+import {
+  DURATIONS,
+  LEVELS,
+  POSITIONS,
+} from "../../../features/setup/useSetupForm";
 
-const durations = [15, 30, 60] as const;
-const levels = ["easy", "medium", "hard"] as const;
-const positions = ["junior", "middle", "senior"] as const;
+type Ctx = { go: (to: string) => void };
 
 export default function SessionStep() {
-  const { values, update } = useSetupForm();
+  const { register, trigger } = useFormContext<SetupForm>();
+  const nav = useNavigate();
+  const { go } = useOutletContext<Ctx>();
+
+  async function next() {
+    const ok = await trigger(["duration", "level", "position"]);
+    if (ok) (go ?? nav)("/setup/preferences");
+  }
 
   return (
-    <div className="space-y-6">
-      <Field title="Длительность">
-        <Row
-          options={durations}
-          value={values.duration}
-          onSelect={(v) => update("duration", v)}
-        />
-      </Field>
+    <form
+      className="space-y-8"
+      onSubmit={(e) => {
+        e.preventDefault();
+        void next();
+      }}
+    >
+      <section className="grid gap-6 md:grid-cols-3">
+        {/* duration */}
+        <div>
+          <div className="mb-2 font-medium">Длительность</div>
+          <div className="flex flex-wrap gap-2">
+            {DURATIONS.map((d) => (
+              <label
+                key={d}
+                className="px-3 py-1 rounded-2xl border cursor-pointer"
+              >
+                <input
+                  type="radio"
+                  value={d}
+                  {...register("duration")}
+                  className="mr-2"
+                />
+                {d} мин
+              </label>
+            ))}
+          </div>
+        </div>
 
-      <Field title="Сложность">
-        <Row
-          options={levels}
-          value={values.level}
-          onSelect={(v) => update("level", v)}
-        />
-      </Field>
+        {/* level */}
+        <div>
+          <div className="mb-2 font-medium">Сложность</div>
+          <div className="flex flex-wrap gap-2">
+            {LEVELS.map((l) => (
+              <label
+                key={l}
+                className="px-3 py-1 rounded-2xl border cursor-pointer"
+              >
+                <input
+                  type="radio"
+                  value={l}
+                  {...register("level")}
+                  className="mr-2"
+                />
+                {l}
+              </label>
+            ))}
+          </div>
+        </div>
 
-      <Field title="Позиция">
-        <Row
-          options={positions}
-          value={values.position}
-          onSelect={(v) => update("position", v)}
-        />
-      </Field>
+        {/* position */}
+        <div>
+          <div className="mb-2 font-medium">Позиция</div>
+          <div className="flex flex-wrap gap-2">
+            {POSITIONS.map((p) => (
+              <label
+                key={p}
+                className="px-3 py-1 rounded-2xl border cursor-pointer"
+              >
+                <input
+                  type="radio"
+                  value={p}
+                  {...register("position")}
+                  className="mr-2"
+                />
+                {p}
+              </label>
+            ))}
+          </div>
+        </div>
+      </section>
 
       <div className="flex justify-between">
         <Link to="/setup/topics" className="px-4 py-2 rounded-lg border">
-          Назад
+          ← Назад
         </Link>
-        <Link to="/setup/preferences" className="px-4 py-2 rounded-lg border">
-          Далее
-        </Link>
-      </div>
-    </div>
-  );
-}
-
-function Field({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <div className="mb-2 font-medium">{title}</div>
-      {children}
-    </div>
-  );
-}
-
-function Row<T extends string | number>({
-  options,
-  value,
-  onSelect,
-}: {
-  options: readonly T[];
-  value: T;
-  onSelect: (v: T) => void;
-}) {
-  return (
-    <div className="flex flex-wrap gap-2">
-      {options.map((o) => (
         <button
-          key={String(o)}
-          onClick={() => onSelect(o)}
-          className={`px-3 py-1 rounded-2xl border ${o === value ? "bg-blue-50" : ""}`}
+          type="submit"
+          className="px-4 py-2 rounded-lg border"
+          style={{ background: "var(--color-yellow)" }}
         >
-          {String(o)}
+          Далее →
         </button>
-      ))}
-    </div>
+      </div>
+    </form>
   );
 }
