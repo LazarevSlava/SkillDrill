@@ -2,13 +2,26 @@ require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 
 const app = express();
 
-app.use(cors());
-//для доступа остальных к этим приколас
+if (process.env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
+
+const CORS_ORIGIN = process.env.CORS_ORIGIN || "http://localhost:4000";
+
+app.use(
+  cors({
+    origin: CORS_ORIGIN,
+    credentials: true,
+  })
+);
+
+app.use(cookieParser());
 app.use(express.json());
-//экспресс для структуры сайта самого
+
 
 //health-check
 app.get("/health", (req, res) => {
@@ -21,6 +34,7 @@ app.use("/api/users", usersRouter);
 //подтяжка
 const PORT = process.env.PORT || 4000;
 const MONGO_URI = process.env.MONGO_URI;
+const JWT_SECRET = process.env.JWT_SECRET;
 // *
 async function start() {
   try {
