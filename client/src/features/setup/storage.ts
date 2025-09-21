@@ -14,7 +14,7 @@ export function writeSetupDraft(draft:unknown){
         localStorage.setItem(DRAFT_KEY,JSON.stringify(draft))
     }catch{}
 }
-export function clearSetupDruft(){
+export function clearSetupDraft(){
     localStorage.removeItem(DRAFT_KEY)
 }
 export function markSetupCompleted(){
