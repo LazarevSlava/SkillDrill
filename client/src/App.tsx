@@ -13,7 +13,7 @@ import ReviewStep from "./pages/Setup/Steps/ReviewStep";
 import { isSetupCompleted } from "./features/setup/storage";
 
 type Props = { children: ReactNode };
-const isAuthed = () => true; // JWT/coocs
+const isAuthed = () => true; // JWT/cookis
 
 // Если не залогинен — уводим на главную
 export function RequireAuth({ children }: Props): ReactElement | null {
