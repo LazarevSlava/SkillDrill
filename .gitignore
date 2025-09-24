@@ -1,1 +1,58 @@
-node_modules
+# ---- OS crap ----
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+
+# ---- Node ----
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ---- Builds & caches (любой пакет) ----
+dist/
+build/
+.out/
+.next/
+.cache/
+.tmp/
+temp/
+.eslintcache
+.nyc_output/
+coverage/
+.vite/
+**/.vite/
+*.tsbuildinfo
+
+# ---- Logs ----
+logs/
+*.log
+*.log.*
+
+# ---- Env файлы (храним только примеры) ----
+.env
+.env.*
+!.env.example
+!.env*.example
+
+# ---- IDE ----
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ---- Docker / локальные данные ----
+.docker/
+docker-data/
+uploads/
+tmp/
+temp/
+dump/
+*.sqlite
+*.sqlite3
+*.local.db
+*.bson
+*.bson.gz

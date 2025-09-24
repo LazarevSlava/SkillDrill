@@ -1,9 +1,9 @@
 // src/pages/LandingPage.tsx
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Header from "../components/Header";
-import Main from "../components/Main";
-import Footer from "../components/Footer";
+import Header from "../components/sections/Header";
+import Main from "../components/sections/Main";
+import Footer from "../components/sections/Footer";
 import Modal from "../components/Modal";
 import RegisterForm from "../forms/RegisterForm";
 
