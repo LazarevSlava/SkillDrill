@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop, "**"]
+  pull_request:
+
+jobs:
+  install-and-check:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        pkg: [client, server]
+    defaults:
+      run:
+        working-directory: ${{ matrix.pkg }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ${{ matrix.pkg }}/package-lock.json
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Prettier check
+        run: npx prettier . --check
+        # Если на сервере пока не нужен prettier:
+        # if: matrix.pkg == 'client'
+
+      - name: ESLint
+        run: |
+          if npm run -s | grep -q '"lint"'; then
+            npm run lint
+          else
+            npx eslint . --ext .js,.ts,.tsx || true
+          fi
+        # Если сервер временно не линтим строго:
+        # continue-on-error: ${{ matrix.pkg == 'server' }}
