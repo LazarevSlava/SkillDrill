@@ -1,68 +1,49 @@
-// eslint.config.cjs — CommonJS, совместим с ESLint 9 flat-config и CI
-const js = require("@eslint/js");
-const globals = require("globals");
-const tseslint = require("typescript-eslint");
+import js from "@eslint/js";
+import ts from "typescript-eslint";
+import react from "eslint-plugin-react";
+import reactHooks from "eslint-plugin-react-hooks";
+import globals from "globals";
 
-module.exports = tseslint.config(
-  // Глобальные игноры
-  {
-    ignores: ["**/node_modules/**", "**/dist/**"],
-  },
+export default [
+  // Глобальные игноры: не чекаем сборки и зависимости
+  { ignores: ["**/dist/**", "**/node_modules/**"] },
 
-  // Базовые JS правила
+  // База JS
   js.configs.recommended,
 
-  // Базовые TS правила без type-check (быстро и не требует tsconfig)
-  ...tseslint.configs.recommended,
+  // База TS (без project: ускоряет и не требует tsconfig для типа-правил)
+  ...ts.configs.recommended,
 
-  // Type-aware правила для клиента (используем оба tsconfig)
+  // Фронтенд (TS/TSX/JSX)
   {
-    files: ["client/**/*.{ts,tsx}"],
+    files: ["client/**/*.{ts,tsx,js,jsx}"],
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "module",
-      parser: tseslint.parser,
-      parserOptions: {
-        project: ["./client/tsconfig.json", "./client/tsconfig.app.json"],
-        tsconfigRootDir: __dirname, // считать пути от корня репо
-      },
       globals: {
         ...globals.browser,
+        React: true,
+        JSX: true,
       },
+      parserOptions: { project: false }, // важно: не требуем tsconfig project
     },
-    plugins: {
-      "@typescript-eslint": tseslint.plugin,
-    },
+    plugins: { react, "react-hooks": reactHooks },
     rules: {
-      // твои правила при желании
+      "react/react-in-jsx-scope": "off",
+      "react/jsx-uses-react": "off",
+      "react-hooks/rules-of-hooks": "error",
+      "react-hooks/exhaustive-deps": "warn",
+    },
+    settings: {
+      react: { version: "detect" },
     },
   },
 
-  // JS/конфиги (node окружение)
+  // Бэкенд (Node, JS)
   {
-    files: ["**/*.{js,cjs,mjs}"],
+    files: ["server/**/*.js"],
     languageOptions: {
-      ecmaVersion: "latest",
-      sourceType: "module",
-      globals: {
-        ...globals.node,
-      },
-    },
-    rules: {},
-  },
-  // JS/конфиги (node окружение)
-  {
-    files: ["**/*.{js,cjs,mjs}"],
-    languageOptions: {
-      ecmaVersion: "latest",
-      sourceType: "module",
-      globals: {
-        ...globals.node,
-      },
-    },
-    rules: {
-      // Разрешаем require() в JS-файлах
-      "@typescript-eslint/no-require-imports": "off",
+      globals: globals.node,
     },
   },
-);
+];

@@ -1,5 +1,5 @@
 // client/src/features/setup/useSetupForm.ts
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useForm, UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -35,6 +35,10 @@ export const DEFAULTS: SetupFormValues = {
   voice: true,
 };
 
+// Для RHF defaultValues используем input-тип
+export type SetupForm = z.output<typeof setupSchema>; // после резолвера (нормализовано)
+export type SetupFormInput = z.input<typeof setupSchema>; // то, что "заходит" в форму
+
 // zod-схема (коэрсим duration из строки ради инпутов)
 export const setupSchema = z.object({
   topics: z.array(z.enum(ALL_TOPICS)).min(1, "Выберите хотя бы одну тему"),
@@ -48,10 +52,6 @@ export const setupSchema = z.object({
   voice: z.boolean(),
 });
 
-// Типы от схемы
-export type SetupForm = z.output<typeof setupSchema>; // после резолвера (нормализовано)
-export type SetupFormInput = z.input<typeof setupSchema>; // то, что "заходит" в форму
-
 // Контекст формы нам не нужен — чтобы не использовать any:
 type FormCtx = undefined;
 
@@ -60,17 +60,17 @@ type UseSetupFormReturn = UseFormReturn<SetupFormInput, FormCtx, SetupForm> & {
   submitAndFinish: () => void;
 };
 
+// Статический источник значений по умолчанию в input-формате
+export const DEFAULTS_INPUT: SetupFormInput = DEFAULTS as SetupFormInput;
+
 export function useSetupForm(): UseSetupFormReturn {
   // Читаем драфт типобезопасно
   const draft = readSetupDraft<SetupFormInput>();
 
-  // DEFAULTS соответствуют пост-резолверному виду; для input-типов это ок (он шире) — подскажем TS
-  const DEFAULTS_INPUT = DEFAULTS as unknown as SetupFormInput;
-
-  const defaultValues = useMemo<SetupFormInput>(
-    () => (draft ? { ...DEFAULTS_INPUT, ...draft } : DEFAULTS_INPUT),
-    [draft],
-  );
+  // RHF читает defaultValues один раз при инициализации — мемоизация не нужна
+  const defaultValues: SetupFormInput = draft
+    ? { ...DEFAULTS_INPUT, ...draft }
+    : { ...DEFAULTS_INPUT };
 
   // useForm: <TFieldValues, TContext, TTransformedValues>
   const form = useForm<SetupFormInput, FormCtx, SetupForm>({

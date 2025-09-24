@@ -6,9 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "eslint .",
     "preview": "vite preview",
-    "prepare": "is-ci || husky install"
+    "prepare": "is-ci || husky install",
+    "lint": "node ../node_modules/eslint/bin/eslint.js .",
+    "lint:fix": "node ../node_modules/eslint/bin/eslint.js . --fix"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
