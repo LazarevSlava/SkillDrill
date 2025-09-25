@@ -14,38 +14,38 @@ export type RegisterFormProps = {
 };
 
 type FormValues = {
-  username?: string;
-  email: string;
+  username?: string; // используем в signup (бэк ждёт name)
+  email: string; // в signin используем как name для логина
   password: string;
 };
 
 // ---- Типы API-ответов (контракт с бэком) ----
 type ApiUser = {
   id: string;
-  username: string;
-  email: string;
+  name: string;
+  createdAt: string;
 };
 
-type ApiOk<T> = {
+type ApiOkUser = {
   ok: true;
-  data: T;
+  user: ApiUser;
 };
 
 type ApiErrCode =
   | "name_taken"
-  | "email_taken"
   | "password_too_short"
   | "invalid_credentials"
   | "validation_error"
-  | "server_error";
+  | "server_error"
+  | "unauthorized";
 
 type ApiError = {
   ok: false;
-  error: { code: ApiErrCode; message: string };
+  error: ApiErrCode;
 };
 
-type SignupResponse = ApiOk<{ user: ApiUser }> | ApiError;
-type LoginResponse = ApiOk<{ user: ApiUser }> | ApiError;
+type SignupResponse = ApiOkUser | ApiError;
+type LoginResponse = ApiOkUser | ApiError;
 
 // env без any
 const viteEnv = (
@@ -126,14 +126,14 @@ export default function RegisterForm({
     switch (code) {
       case "name_taken":
         return "Это имя уже занято";
-      case "email_taken":
-        return "Этот e-mail уже используется";
       case "password_too_short":
         return "Слишком короткий пароль (мин. 6 символов)";
       case "invalid_credentials":
-        return "Неверный e-mail или пароль";
+        return "Неверный логин или пароль";
       case "validation_error":
         return "Некорректные данные формы";
+      case "unauthorized":
+        return "Не авторизован";
       default:
         return fallback;
     }
@@ -150,17 +150,14 @@ export default function RegisterForm({
       }
 
       if (mode === "signup") {
-        const payload = await jsonFetch<SignupResponse>(
-          `${API_BASE}/api/auth/signup`,
-          {
-            method: "POST",
-            body: JSON.stringify({
-              username: data.username?.trim(),
-              email: data.email?.trim(),
-              password: data.password,
-            }),
-          },
-        );
+        // Бэку нужен name + password. Email на бэке не используется — оставляем в UI для визуальной целостности.
+        const payload = await jsonFetch<SignupResponse>(`${API_BASE}/users`, {
+          method: "POST",
+          body: JSON.stringify({
+            name: data.username?.trim(),
+            password: data.password,
+          }),
+        });
 
         if (!("ok" in payload) || !payload.ok) {
           if (stubMode === "fallback") {
@@ -171,18 +168,21 @@ export default function RegisterForm({
             return;
           }
           const msg = mapErrorCodeToMessage(
-            payload?.error?.code,
+            payload?.error,
             "Ошибка регистрации",
           );
           throw new Error(msg);
         }
       } else {
+        // В signin поле "Email" трактуем как name для логина — чтобы не ломать визуал.
+        const loginName = (data.email ?? "").trim();
+
         const payload = await jsonFetch<LoginResponse>(
-          `${API_BASE}/api/auth/login`,
+          `${API_BASE}/users/login`,
           {
             method: "POST",
             body: JSON.stringify({
-              email: data.email?.trim(),
+              name: loginName,
               password: data.password,
             }),
           },
@@ -196,10 +196,7 @@ export default function RegisterForm({
             await simulateSuccess();
             return;
           }
-          const msg = mapErrorCodeToMessage(
-            payload?.error?.code,
-            "Ошибка входа",
-          );
+          const msg = mapErrorCodeToMessage(payload?.error, "Ошибка входа");
           throw new Error(msg);
         }
       }

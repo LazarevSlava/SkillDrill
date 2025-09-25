@@ -1,3 +1,4 @@
+// server/index.js
 require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
@@ -7,48 +8,41 @@ const cookieParser = require("cookie-parser");
 const app = express();
 
 if (process.env.NODE_ENV === "production") {
-  app.set("trust proxy", 1);
+  app.set("trust proxy", 1); // чтобы secure-cookie корректно работали за прокси
 }
 
-const CORS_ORIGIN = process.env.CORS_ORIGIN || "http://localhost:4000";
+// ВАЖНО: origin = адрес фронта (Vite по умолчанию 5173)
+const CORS_ORIGIN = process.env.CORS_ORIGIN || "http://localhost:5173";
 
-app.use(
-  cors({
-    origin: CORS_ORIGIN,
-    credentials: true,
-  })
-);
-
+app.use(cors({ origin: CORS_ORIGIN, credentials: true }));
 app.use(cookieParser());
 app.use(express.json());
 
-
-//health-check
+// health-check
 app.get("/health", (req, res) => {
   res.json({ ok: true });
 });
 
+// Роуты
 const usersRouter = require("./routes/users");
-app.use("/api/users", usersRouter);
+// Делаем /users — под это уже настроен фронт
+app.use("/users", usersRouter);
 
-//подтяжка
+// Параметры окружения
 const PORT = process.env.PORT || 4000;
-const MONGO_URI = process.env.MONGO_URI;
-const JWT_SECRET = process.env.JWT_SECRET;
-// *
+const MONGO_URI =
+  process.env.MONGO_URI || "mongodb://127.0.0.1:27017/skilldrill";
+
+// Старт
 async function start() {
   try {
-    await mongoose.connect(MONGO_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    console.log(" Подключение к MongoDB успешно");
-
+    await mongoose.connect(MONGO_URI); // для Mongoose 7+ без лишних опций
+    console.log("MongoDB connected");
     app.listen(PORT, () => {
-      console.log(` Сервер работает на порту ${PORT}`);
+      console.log(`Server on http://localhost:${PORT}`);
     });
   } catch (err) {
-    console.error(" Ошибка подключения к БД:", err.message);
+    console.error("MongoDB connect error:", err.message);
     process.exit(1);
   }
 }
