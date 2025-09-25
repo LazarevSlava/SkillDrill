@@ -7,14 +7,26 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client # ключ: работаем из client/
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+
       - name: Use Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
+          cache-dependency-path: client/package-lock.json # берём кэш по client lockfile
 
-      - run: npm ci
-      - run: npx eslint client server --ext js,ts,tsx
-      - run: npx prettier --check .
+      - name: Install deps (client)
+        run: npm ci
+
+      # Линкуем из client/ обе папки: текущую (.) и соседнюю ../server
+      - name: ESLint (client + server)
+        run: npx eslint . ../server --ext js,ts,tsx
+
+      - name: Prettier check (client + server)
+        run: npx prettier --check . ../server
