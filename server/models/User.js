@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
   {
@@ -6,7 +6,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+      lowercase: true, // автоматом в нижний регистр
       unique: true,
+      minlength: 3,
+      maxlength: 32,
+      match: /^[a-z0-9_]+$/, // только латиница, цифры и "_"
     },
     passwordHash: {
       type: String,
@@ -18,4 +22,4 @@ const userSchema = new mongoose.Schema(
 
 const User = mongoose.model("User", userSchema);
 
-export default User;
+module.exports = User;

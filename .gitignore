@@ -56,3 +56,7 @@ dump/
 *.local.db
 *.bson
 *.bson.gz
+
+# Env
+.env
+server/.env
