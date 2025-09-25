@@ -1,25 +1,33 @@
 {
   "name": "skilldrill",
   "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "client",
+    "server"
+  ],
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "concurrently \"npm run dev --prefix client\" \"npm run dev --prefix server\"",
-    "prepare": "husky install",
+    "dev": "concurrently \"npm run -w client dev\" \"npm run -w server dev\"",
+    "prepare": "is-ci || husky install",
     "format": "prettier --write .",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
-    "lint:quiet": "eslint . --quiet"
+    "format:check": "prettier --check .",
+    "lint": "npm run -w client lint && npm run -w server lint",
+    "lint:fix": "npm run -w client lint:fix && npm run -w server lint:fix",
+    "lint:quiet": "npm run -w client lint:quiet && npm run -w server lint:quiet",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "lint-staged": {
-    "*.{js,ts,tsx}": [
-      "eslint --fix",
+    "*.{js,ts,tsx,jsx,json,css,md}": [
       "prettier --write"
+    ],
+    "client/**/*.{js,ts,tsx,jsx}": [
+      "eslint --fix"
+    ],
+    "server/**/*.{js,ts,tsx,jsx}": [
+      "eslint --fix"
     ]
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "devDependencies": {
     "@eslint/js": "^9.36.0",
     "@typescript-eslint/parser": "^8.32.0",
