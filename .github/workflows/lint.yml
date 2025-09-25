@@ -7,9 +7,6 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: client
 
     steps:
       - uses: actions/checkout@v4
@@ -21,15 +18,28 @@ jobs:
           cache: npm
           cache-dependency-path: client/package-lock.json
 
+      # Устанавливаем зависимости проекта (там lockfile есть)
       - name: Install deps (client)
+        working-directory: client
         run: npm ci
 
-      # Добираем плоскую конфигурацию ESLint, которую импортирует корневой eslint.config.js
-      - name: Ensure flat-config deps
-        run: npm i -D @eslint/js
+      # ВРЕМЕННО (только в CI) ставим ESLint-зависимости в КОРЕНЬ для корневого eslint.config.js
+      # Ничего не коммитим и не создаём package-lock (флаги --no-save --no-package-lock).
+      - name: Install root ESLint deps (temporary)
+        working-directory: .
+        run: |
+          npm i -D --no-save --no-package-lock \
+            eslint \
+            @eslint/js \
+            @typescript-eslint/parser \
+            @typescript-eslint/eslint-plugin
 
-      - name: ESLint (client + server, root config)
-        run: npx eslint --config ../eslint.config.js . ../server --ext js,ts,tsx
+      # Запускаем ESLint из корня — теперь импорты из eslint.config.js найдутся
+      - name: ESLint (client + server, using root config)
+        working-directory: .
+        run: npx eslint client server --ext js,ts,tsx
 
+      # Prettier можно запускать из client, чтобы взять установленный там prettier
       - name: Prettier check (client + server)
+        working-directory: client
         run: npx prettier --check . ../server
