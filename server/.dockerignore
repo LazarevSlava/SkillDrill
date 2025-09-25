@@ -1,0 +1,12 @@
+# Исключаем локальные зависимости
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Системные файлы
+.DS_Store
+.env
+
+# Git
+.git
+.gitignore
