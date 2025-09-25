@@ -2,18 +2,30 @@ name: CI
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths:
       - "client/**"
       - "server/**"
       - ".github/workflows/**"
       - "eslint.config.js"
   push:
-    branches: [ main ]
+    branches: [main]
+    paths:
+      - "client/**"
+      - "server/**"
+      - ".github/workflows/**"
+      - "eslint.config.js"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   client:
-    name: Client build (non-blocking on PR)
+    name: Client build
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -23,14 +35,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          cache: npm
           cache-dependency-path: client/package-lock.json
       - run: npm ci
       - run: npm run build --if-present
-        continue-on-error: true  # не валим PR из-за фронт-билда пока
+        # на PR не валим билдом, на push в main — валим
+        continue-on-error: ${{ github.event_name == 'pull_request' }}
 
   server:
-    name: Server install (smoke)
+    name: Server build
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -40,22 +53,32 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          cache: npm
           cache-dependency-path: server/package-lock.json
       - run: npm ci
       - run: npm run build --if-present
-        continue-on-error: true  # тоже мягко
+        continue-on-error: ${{ github.event_name == 'pull_request' }}
 
   lint:
-    name: ESLint (soft)
+    name: ESLint & Prettier
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        pkg: [client, server]
+    defaults:
+      run:
+        working-directory: ${{ matrix.pkg }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm ci
-        if: ${{ hashFiles('package-lock.json') != '' }}
-      - run: npx eslint . || true   # не блокируем, просто отчёт
-
-  # Деплой переносим В ОТДЕЛЬНЫЙ workflow (см. ниже)
+          cache: npm
+          cache-dependency-path: ./${{ matrix.pkg }}/package-lock.json
+      - name: Install
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Prettier check
+        run: npm run prettier:check
