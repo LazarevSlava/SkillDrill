@@ -1,4 +1,3 @@
-// client/src/features/setup/storage.ts
 const DRAFT_KEY = "sd.setup.draft";
 const COMPLETED_KEY = "sd.setup.completed";
 

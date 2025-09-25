@@ -1,4 +1,3 @@
-// client/src/pages/Setup/Steps/ReviewStep.tsx
 import { useFormContext } from "react-hook-form";
 import { useNavigate, Link } from "react-router-dom";
 import type { SetupFormInput } from "../../../features/setup/useSetupForm";

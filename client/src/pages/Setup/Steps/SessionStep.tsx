@@ -1,4 +1,3 @@
-// client/src/pages/Setup/Steps/SessionStep.tsx
 import { useFormContext } from "react-hook-form";
 import { useNavigate, Link, useOutletContext } from "react-router-dom";
 import type { SetupForm } from "../../../features/setup/useSetupForm";
