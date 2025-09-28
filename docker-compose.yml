@@ -1,14 +1,16 @@
-# server/docker-compose.yml
 services:
   api:
-    build: .
+    build:
+      context: ./server
+      dockerfile: Dockerfile
     container_name: skilldrill-api
     env_file:
-      - .env
+      - ./server/.env
     ports:
-      - "8080:8080"     # host:container
+      - "8080:8080"
     depends_on:
-      - mongo
+      mongo:
+        condition: service_healthy
     restart: unless-stopped
 
   mongo:
@@ -16,8 +18,11 @@ services:
     container_name: skilldrill-mongo
     volumes:
       - mongo_data:/data/db
-    ports:
-      - "27017:27017"
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
 
 volumes:
