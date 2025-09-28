@@ -14,21 +14,22 @@ export type RegisterFormProps = {
 };
 
 type FormValues = {
-  username?: string;
-  email: string;
+  username?: string; // используется в signup
+  email: string; // в signin будет играть роль username (name)
   password: string;
 };
 
 // ---- Типы API-ответов (контракт с бэком) ----
 type ApiUser = {
   id: string;
-  username: string;
-  email: string;
+  name: string;
+  createdAt?: string;
 };
 
 type ApiOk<T> = {
   ok: true;
-  data: T;
+  user?: ApiUser; // наш бэкенд отдаёт { ok: true, user: {...} }
+  data?: T; // оставим на будущее совместимость, если где-то окутанно в data
 };
 
 type ApiErrCode =
@@ -37,11 +38,12 @@ type ApiErrCode =
   | "password_too_short"
   | "invalid_credentials"
   | "validation_error"
+  | "name_and_password_required"
   | "server_error";
 
 type ApiError = {
   ok: false;
-  error: { code: ApiErrCode; message: string };
+  error: { code?: ApiErrCode; message?: string };
 };
 
 type SignupResponse = ApiOk<{ user: ApiUser }> | ApiError;
@@ -54,7 +56,7 @@ const viteEnv = (
   }
 ).env;
 
-const API_BASE = viteEnv?.VITE_API_BASE_URL ?? "http://localhost:4000";
+const API_BASE = viteEnv?.VITE_API_BASE_URL ?? "http://localhost:8080";
 const ENV_STUB: StubMode = (viteEnv?.VITE_AUTH_STUB ?? "off") as StubMode;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -131,7 +133,9 @@ export default function RegisterForm({
       case "password_too_short":
         return "Слишком короткий пароль (мин. 6 символов)";
       case "invalid_credentials":
-        return "Неверный e-mail или пароль";
+        return "Неверные имя пользователя или пароль";
+      case "name_and_password_required":
+        return "Укажите имя пользователя и пароль";
       case "validation_error":
         return "Некорректные данные формы";
       default:
@@ -150,17 +154,14 @@ export default function RegisterForm({
       }
 
       if (mode === "signup") {
-        const payload = await jsonFetch<SignupResponse>(
-          `${API_BASE}/api/auth/signup`,
-          {
-            method: "POST",
-            body: JSON.stringify({
-              username: data.username?.trim(),
-              email: data.email?.trim(),
-              password: data.password,
-            }),
-          },
-        );
+        const payload = await jsonFetch<SignupResponse>(`${API_BASE}/users`, {
+          method: "POST",
+          body: JSON.stringify({
+            // бэкенд ждёт name/password
+            name: data.username?.trim()?.toLowerCase(),
+            password: data.password,
+          }),
+        });
 
         if (!("ok" in payload) || !payload.ok) {
           if (stubMode === "fallback") {
@@ -171,18 +172,25 @@ export default function RegisterForm({
             return;
           }
           const msg = mapErrorCodeToMessage(
-            payload?.error?.code,
+            (payload as ApiError)?.error?.code,
             "Ошибка регистрации",
           );
           throw new Error(msg);
         }
       } else {
+        // signin: на бэке ожидается name/password
+        // у нас нет отдельного поля username в режиме входа,
+        // поэтому используем значение из email-инпута как name.
+        const nameForLogin = (data.username ?? data.email)
+          ?.trim()
+          ?.toLowerCase();
+
         const payload = await jsonFetch<LoginResponse>(
-          `${API_BASE}/api/auth/login`,
+          `${API_BASE}/users/login`,
           {
             method: "POST",
             body: JSON.stringify({
-              email: data.email?.trim(),
+              name: nameForLogin,
               password: data.password,
             }),
           },
@@ -197,7 +205,7 @@ export default function RegisterForm({
             return;
           }
           const msg = mapErrorCodeToMessage(
-            payload?.error?.code,
+            (payload as ApiError)?.error?.code,
             "Ошибка входа",
           );
           throw new Error(msg);
@@ -302,15 +310,18 @@ export default function RegisterForm({
         )}
 
         <label className="text-sm font-medium text-[color:var(--color-dark-gray)]">
-          Email
+          {mode === "signin" ? "Username" : "Email"}
         </label>
         <input
-          type="email"
+          type={mode === "signin" ? "text" : "email"}
           className={inputClass}
-          placeholder="you@example.com"
-          {...register("email", { required: "Email is required" })}
+          placeholder={mode === "signin" ? "your_username" : "you@example.com"}
+          {...register("email", {
+            required:
+              mode === "signin" ? "Username is required" : "Email is required",
+          })}
           disabled={loading || isSubmitting}
-          autoComplete="email"
+          autoComplete={mode === "signin" ? "username" : "email"}
         />
         {errors.email && (
           <span className="text-sm text-red-500">{errors.email.message}</span>
