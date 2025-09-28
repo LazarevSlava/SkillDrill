@@ -20,6 +20,41 @@
 - **Роль:** тестирование новых функций перед релизом
 - **База данных:** копия или отдельная БД для тестов
 
+# OPS: сервер, Docker, Mongo, Compass
+
+## 1.1 Перезапуск / деплой
+
+````bash
+ssh -i ~/.ssh/id_rsa_hetzner -N -L 27019:127.0.0.1:27017 deployer@49.12.110.251
+# на сервере
+cd /opt/skilldrill/server
+
+# подтянуть код (если деплой из Git)
+git fetch && git reset --hard origin/main
+
+# поднять/обновить контейнеры
+docker compose up -d
+
+# пересобрать API после изменений Dockerfile/зависимостей
+docker compose up -d --build api
+
+# принудительно пересоздать контейнер (без сборки)
+docker compose up -d --force-recreate api
+
+docker ps                              # список контейнеров
+docker compose ps                      # то же по compose-проекту
+docker logs -f skilldrill-api          # «хвост» логов API
+docker logs -f skilldrill-mongo        # логи Mongo
+docker logs -n 200 skilldrill-api      # последние 200 строк
+
+# здоровье Mongo (healthcheck)
+docker ps | grep skilldrill-mongo      # статус: (healthy/starting)
+
+docker exec -it skilldrill-api printenv | grep -E 'NODE_ENV|PORT|MONGO_URI'
+docker exec -it skilldrill-mongo printenv | grep MONGO_INITDB
+
+
+
 ---
 
 ## 2. Базы данных
@@ -27,6 +62,17 @@
 - **Тип:** MongoDB
 - **Где расположена:** в контейнере на сервере
 - **Использование:** хранение пользователей, задач и т. д.
+
+## Remote MongoDB через Compass (Hetzner)
+
+**SSH-туннель (на Mac):**
+```bash
+ssh -i ~/.ssh/id_rsa_hetzner -N -L 27019:127.0.0.1:27017 deployer@49.12.110.251
+
+## in compas
+mongodb://root:<root_pass>@localhost:27019/skilldrill?authSource=admin
+
+
 
 ---
 
@@ -42,7 +88,7 @@
 
 ## 4. CI/CD (Continuous Integration / Continuous Deployment)
 
-**Что это:**  
+**Что это:**
 CI/CD — это автоматизация сборки, тестов и деплоя.
 
 - **CI (Continuous Integration)** → проверка кода при каждом коммите (линтеры, тесты).
@@ -62,7 +108,7 @@ CI/CD — это автоматизация сборки, тестов и деп
 
 ## 5. Мониторинг
 
-**Что это:**  
+**Что это:**
 Мониторинг — это системы, которые показывают, как живёт сервер и приложение: работает ли оно, сколько памяти/CPU ест, какие ошибки возникают.
 
 - **Инструмент:** (например, UptimeRobot / Grafana / Prometheus / Sentry)
@@ -95,16 +141,17 @@ CI/CD — это автоматизация сборки, тестов и деп
 
 ## 8. FAQ (часто задаваемые вопросы)
 
-- **Где взять ключи и пароли?**  
+- **Где взять ключи и пароли?**
   → В менеджере паролей (Bitwarden/1Password)
 
-- **Как обновить проект локально?**  
+- **Как обновить проект локально?**
   → `git pull origin main`
 
-- **Как запустить фронт локально?**  
+- **Как запустить фронт локально?**
   → `cd client && npm install && npm start`
 
-- **Как запустить бэк локально?**  
+- **Как запустить бэк локально?**
   → `cd server && npm install && npm run dev`
 
 ---
+````
