@@ -15,23 +15,14 @@ export type RegisterFormProps = {
 
 type FormValues = {
   username?: string; // используется в signup
-  email: string; // в signin будет играть роль username (name)
+  email: string; // в signin играёт роль username (name)
   password: string;
 };
 
-// ---- Типы API-ответов (контракт с бэком) ----
-type ApiUser = {
-  id: string;
-  name: string;
-  createdAt?: string;
-};
-
-type ApiOk<T> = {
-  ok: true;
-  user?: ApiUser; // наш бэкенд отдаёт { ok: true, user: {...} }
-  data?: T; // оставим на будущее совместимость, если где-то окутанно в data
-};
-
+// ---- Контракт с бэком ----
+// Сервер отдаёт { ok: true, user: {...} } или { ok: false, error: ... }
+type ApiUser = { id: string; name: string; createdAt?: string };
+type ApiOk = { ok: true; user: ApiUser };
 type ApiErrCode =
   | "name_taken"
   | "email_taken"
@@ -40,14 +31,9 @@ type ApiErrCode =
   | "validation_error"
   | "name_and_password_required"
   | "server_error";
-
-type ApiError = {
-  ok: false;
-  error: { code?: ApiErrCode; message?: string };
-};
-
-type SignupResponse = ApiOk<{ user: ApiUser }> | ApiError;
-type LoginResponse = ApiOk<{ user: ApiUser }> | ApiError;
+type ApiError = { ok: false; error?: { code?: ApiErrCode; message?: string } };
+type SignupResponse = ApiOk | ApiError;
+type LoginResponse = ApiOk | ApiError;
 
 // env без any
 const viteEnv = (
@@ -61,7 +47,7 @@ const ENV_STUB: StubMode = (viteEnv?.VITE_AUTH_STUB ?? "off") as StubMode;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-// Небольшой helper: единый fetch с JSON + куки
+// Единый fetch с JSON + cookie
 async function jsonFetch<T>(
   input: RequestInfo | URL,
   init?: RequestInit,
@@ -72,9 +58,8 @@ async function jsonFetch<T>(
       "Content-Type": "application/json",
       ...(init?.headers || {}),
     },
-    credentials: "include", // <— ВАЖНО: cookie-based auth
+    credentials: "include", // cookie-based auth
   });
-  // Бэкенд ВСЕГДА отвечает JSON (и при ошибке тоже)
   const data = (await res.json().catch(() => ({}))) as T;
   return data;
 }
@@ -157,7 +142,6 @@ export default function RegisterForm({
         const payload = await jsonFetch<SignupResponse>(`${API_BASE}/users`, {
           method: "POST",
           body: JSON.stringify({
-            // бэкенд ждёт name/password
             name: data.username?.trim()?.toLowerCase(),
             password: data.password,
           }),
@@ -178,13 +162,10 @@ export default function RegisterForm({
           throw new Error(msg);
         }
       } else {
-        // signin: на бэке ожидается name/password
-        // у нас нет отдельного поля username в режиме входа,
-        // поэтому используем значение из email-инпута как name.
+        // signin: используем поле ниже, подписанное как Username
         const nameForLogin = (data.username ?? data.email)
           ?.trim()
           ?.toLowerCase();
-
         const payload = await jsonFetch<LoginResponse>(
           `${API_BASE}/users/login`,
           {
