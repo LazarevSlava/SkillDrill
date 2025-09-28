@@ -1,21 +1,18 @@
-
+# server/Dockerfile
 FROM node:20-alpine
 
 WORKDIR /app
 
-# Оптимальный кеш: сначала зависимости
+# Установим только то, что нужно для запуска
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm ci --omit=dev
 
-# Копируем исходники
+# Копируем исходники (у тебя index.js, routes/, models/)
 COPY . .
 
-# Аргументы среды
+# В проде Express слушает этот порт
 ENV NODE_ENV=production
-# при необходимости: ENV PORT=8080
-
-# (опционально) прогрев сборки, если есть build-скрипт
-# RUN npm run build
+ENV PORT=8080
 
 EXPOSE 8080
-CMD ["node", "index.js"]
+CMD ["npm", "start"]
