@@ -38,25 +38,38 @@ jobs:
           mkdir -p ~/.ssh
           ssh-keyscan -p "${SSH_PORT:-22}" -H "${DEPLOY_HOST}" >> ~/.ssh/known_hosts
 
-      - name: Deploy (git reset + docker compose up)
+      - name: Deploy (fix owner + git reset + docker compose up)
         run: |
           ssh -p "${SSH_PORT:-22}" "${DEPLOY_USER}@${DEPLOY_HOST}" << 'EOF'
             set -euo pipefail
 
-            # Константы для удалённой машины (без внешних env — не будет "unbound variable")
             DEPLOY_DIR=/opt/skilldrill
             REPO_BRANCH=main
 
             mkdir -p "$DEPLOY_DIR"
 
-            # Уберём "dubious ownership" для git
+            # 1) ЧИНИМ ВЛАДЕНИЕ (вот из-за этого у тебя упало на FETCH_HEAD)
+            # если sudo есть — используем; если нет — пробуем без него
+            if command -v sudo >/dev/null 2>&1; then
+              sudo chown -R "$USER:$USER" "$DEPLOY_DIR" || true
+            else
+              chown -R "$USER:$USER" "$DEPLOY_DIR" || true
+            fi
+
+            # Дополнительно: git любит нормальные права на .git
+            if [ -d "$DEPLOY_DIR/.git" ]; then
+              find "$DEPLOY_DIR/.git" -type d -exec chmod 700 {} \; || true
+              find "$DEPLOY_DIR/.git" -type f -exec chmod 600 {} \; || true
+            fi
+
+            # 2) Убираем "dubious ownership"
             git config --global --add safe.directory "$DEPLOY_DIR"
             git config --global --add safe.directory "$DEPLOY_DIR/.git"
 
-            # Проверим, что там git-репозиторий (если нет — дадим понятную подсказку и выходим)
+            # 3) Проверяем, что это git-репозиторий (если нет — скажем, что делать 1 раз)
             if [ ! -d "$DEPLOY_DIR/.git" ]; then
               echo "::error::$DEPLOY_DIR не является git-репозиторием."
-              echo "::error::Один раз на сервере выполните:"
+              echo "::error::Выполни один раз на сервере:"
               echo "  git clone <SSH-URL-ВАШЕГО-РЕПО> $DEPLOY_DIR"
               echo "  cd $DEPLOY_DIR && git checkout $REPO_BRANCH"
               exit 1
@@ -64,17 +77,14 @@ jobs:
 
             cd "$DEPLOY_DIR"
 
-            # Обновляем код
+            # 4) Обновляем код
             git fetch --all --prune
             git reset --hard "origin/$REPO_BRANCH"
 
-            # Пересобираем и поднимаем контейнеры
+            # 5) Пересобираем и поднимаем контейнеры
             docker compose pull || true
             docker compose up -d --build
 
-            # Короткий статус
+            # 6) Короткий статус
             docker compose ps
-
-            # При желании можно включить healthcheck:
-            # curl -fsS http://127.0.0.1:8080/health || (docker logs --tail=200 skilldrill-api && exit 1)
           EOF
