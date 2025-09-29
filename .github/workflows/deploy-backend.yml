@@ -1,0 +1,54 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'server/**'
+      - 'docker-compose.yml'
+      - '.github/workflows/deploy-backend.yml'
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      DEPLOY_DIR: /opt/skilldrill
+      SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT || 22 }}
+    steps:
+      - name: Checkout (context only)
+        uses: actions/checkout@v4
+
+      - name: Load SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ env.SSH_PRIVATE_KEY }}
+
+      - name: Known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p "${{ env.SSH_PORT }}" -H "${{ env.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Deploy (git reset + docker compose up)
+        run: |
+          ssh -p "${{ env.SSH_PORT }}" "${{ env.DEPLOY_USER }}@${{ env.DEPLOY_HOST }}" << 'EOF'
+            set -euo pipefail
+            cd /opt/skilldrill
+
+            # обновляем код из main
+            git fetch --all --prune
+            git reset --hard origin/main
+
+            # поднимаем бэкенд
+            docker compose pull || true
+            docker compose up -d --build
+
+            # короткий статус
+            docker compose ps
+
+            # опционально: быстрый healthcheck API (подставь порт/роут)
+            # curl -fsS http://127.0.0.1:8080/health || (docker logs --tail=200 skilldrill-api && exit 1)
+          EOF
