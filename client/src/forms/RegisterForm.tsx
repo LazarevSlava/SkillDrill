@@ -21,7 +21,7 @@ type FormValues = {
 
 // ---- Контракт с бэком ----
 // Сервер отдаёт { ok: true, user: {...} } или { ok: false, error: ... }
-type ApiUser = { id: string; name: string; createdAt?: string };
+type ApiUser = { id: string; name: string; email?: string; createdAt?: string };
 type ApiOk = { ok: true; user: ApiUser };
 type ApiErrCode =
   | "name_taken"
@@ -30,8 +30,14 @@ type ApiErrCode =
   | "invalid_credentials"
   | "validation_error"
   | "name_and_password_required"
+  | "invalid_email"
   | "server_error";
-type ApiError = { ok: false; error?: { code?: ApiErrCode; message?: string } };
+type ApiErrorField =
+  | ApiErrCode
+  | { code?: ApiErrCode; message?: string }
+  | string
+  | undefined;
+type ApiError = { ok: false; error?: ApiErrorField };
 type SignupResponse = ApiOk | ApiError;
 type LoginResponse = ApiOk | ApiError;
 
@@ -62,6 +68,19 @@ async function jsonFetch<T>(
   });
   const data = (await res.json().catch(() => ({}))) as T;
   return data;
+}
+
+function normalizeLower(s?: string) {
+  return s?.trim().toLowerCase() ?? "";
+}
+
+// Унифицируем разные варианты ошибки бэка: строка | объект | код
+function extractErrorCode(err: ApiErrorField): ApiErrCode | undefined {
+  if (!err) return undefined;
+  if (typeof err === "string") return err as ApiErrCode;
+  if (typeof err === "object" && "code" in err)
+    return (err as { code?: ApiErrCode }).code;
+  return undefined;
 }
 
 export default function RegisterForm({
@@ -99,8 +118,18 @@ export default function RegisterForm({
   const usernameRequired = useMemo(() => mode === "signup", [mode]);
   const stubMode: StubMode = stub ?? ENV_STUB;
 
-  const onSuccessOrGoApp = () => (onSuccess ?? (() => navigate("/app")))();
-
+  const onSuccessOrGoApp = () => {
+    const usingProp = typeof onSuccess === "function";
+    console.log("[RegisterForm] onSuccess provided?", usingProp);
+    if (usingProp) {
+      try {
+        onSuccess!();
+      } catch (e) {
+        console.warn("onSuccess threw:", e);
+      }
+    }
+    navigate("/setup"); // всегда переходим
+  };
   const simulateSuccess = async () => {
     await sleep(450);
     onSuccessOrGoApp();
@@ -115,6 +144,8 @@ export default function RegisterForm({
         return "Это имя уже занято";
       case "email_taken":
         return "Этот e-mail уже используется";
+      case "invalid_email":
+        return "Неверный формат e-mail";
       case "password_too_short":
         return "Слишком короткий пароль (мин. 6 символов)";
       case "invalid_credentials":
@@ -127,6 +158,20 @@ export default function RegisterForm({
         return fallback;
     }
   };
+  function handleAuthSuccess(payload: ApiOk) {
+    // 1) лог полного ответа
+    console.log("[RegisterForm] auth success payload:", payload);
+
+    // 2) сохраним юзера локально (токен у нас в httpOnly cookie)
+    try {
+      localStorage.setItem("auth:user", JSON.stringify(payload.user));
+    } catch (err) {
+      console.error("Failed to save user in localStorage:", err);
+    }
+
+    // 3) переходим дальше
+    onSuccessOrGoApp();
+  }
 
   const onSubmit = async (data: FormValues) => {
     setServerError(null);
@@ -139,10 +184,14 @@ export default function RegisterForm({
       }
 
       if (mode === "signup") {
+        const name = normalizeLower(data.username);
+        const email = normalizeLower(data.email);
+
         const payload = await jsonFetch<SignupResponse>(`${API_BASE}/users`, {
           method: "POST",
           body: JSON.stringify({
-            name: data.username?.trim()?.toLowerCase(),
+            name,
+            email, // <-- добавили email в тело запроса
             password: data.password,
           }),
         });
@@ -155,17 +204,15 @@ export default function RegisterForm({
             await simulateSuccess();
             return;
           }
-          const msg = mapErrorCodeToMessage(
-            (payload as ApiError)?.error?.code,
-            "Ошибка регистрации",
-          );
+          const code = extractErrorCode((payload as ApiError)?.error);
+          const msg = mapErrorCodeToMessage(code, "Ошибка регистрации");
           throw new Error(msg);
         }
+        handleAuthSuccess(payload as ApiOk);
+        return;
       } else {
         // signin: используем поле ниже, подписанное как Username
-        const nameForLogin = (data.username ?? data.email)
-          ?.trim()
-          ?.toLowerCase();
+        const nameForLogin = normalizeLower(data.username ?? data.email);
         const payload = await jsonFetch<LoginResponse>(
           `${API_BASE}/users/login`,
           {
@@ -185,12 +232,12 @@ export default function RegisterForm({
             await simulateSuccess();
             return;
           }
-          const msg = mapErrorCodeToMessage(
-            (payload as ApiError)?.error?.code,
-            "Ошибка входа",
-          );
+          const code = extractErrorCode((payload as ApiError)?.error);
+          const msg = mapErrorCodeToMessage(code, "Ошибка входа");
           throw new Error(msg);
         }
+        handleAuthSuccess(payload as ApiOk);
+        return;
       }
 
       // если всё ок — кука уже установлена бэкендом
@@ -300,6 +347,14 @@ export default function RegisterForm({
           {...register("email", {
             required:
               mode === "signin" ? "Username is required" : "Email is required",
+            ...(mode === "signup"
+              ? {
+                  pattern: {
+                    value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                    message: "Invalid email format",
+                  },
+                }
+              : {}),
           })}
           disabled={loading || isSubmitting}
           autoComplete={mode === "signin" ? "username" : "email"}

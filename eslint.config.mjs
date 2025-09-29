@@ -51,6 +51,10 @@ export default [
       "react/jsx-uses-react": "off",
       "react-hooks/rules-of-hooks": "error",
       "react-hooks/exhaustive-deps": "warn",
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { argsIgnorePattern: "^_" },
+      ],
     },
     settings: {
       react: { version: "detect" },
