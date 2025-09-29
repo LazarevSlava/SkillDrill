@@ -25,66 +25,46 @@ jobs:
       SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
 
     steps:
-      - name: Checkout (context only)
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Load SSH key
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ env.SSH_PRIVATE_KEY }}
-
-      - name: Add server to known_hosts
+      - name: Prep known_hosts
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -p "${SSH_PORT:-22}" -H "${DEPLOY_HOST}" >> ~/.ssh/known_hosts
 
-      - name: Deploy (fix owner + git reset + docker compose up)
+      - name: Create remote dir (once)
         run: |
-          ssh -p "${SSH_PORT:-22}" "${DEPLOY_USER}@${DEPLOY_HOST}" << 'EOF'
+          ssh -p "${SSH_PORT:-22}" -i <(printf "%s" "${SSH_PRIVATE_KEY}") "${DEPLOY_USER}@${DEPLOY_HOST}" 'mkdir -p /opt/skilldrill/server'
+
+      # Копируем только нужные файлы бэкенда на сервер (как фронт)
+      - name: Rsync server/
+        uses: Burnett01/rsync-deployments@7.0.2
+        with:
+          switches: -avz --delete --exclude node_modules --exclude .git
+          path: ./server/
+          remote_path: /opt/skilldrill/server/
+          remote_host: ${{ env.DEPLOY_HOST }}
+          remote_user: ${{ env.DEPLOY_USER }}
+          remote_key: ${{ env.SSH_PRIVATE_KEY }}
+
+      - name: Rsync docker-compose.yml
+        uses: Burnett01/rsync-deployments@7.0.2
+        with:
+          switches: -avz
+          path: ./docker-compose.yml
+          remote_path: /opt/skilldrill/
+          remote_host: ${{ env.DEPLOY_HOST }}
+          remote_user: ${{ env.DEPLOY_USER }}
+          remote_key: ${{ env.SSH_PRIVATE_KEY }}
+
+      # Никакого git на сервере — просто билдим/поднимаем
+      - name: Compose up on server
+        run: |
+          ssh -p "${SSH_PORT:-22}" -i <(printf "%s" "${SSH_PRIVATE_KEY}") "${DEPLOY_USER}@${DEPLOY_HOST}" << 'EOF'
             set -euo pipefail
-
-            DEPLOY_DIR=/opt/skilldrill
-            REPO_BRANCH=main
-
-            mkdir -p "$DEPLOY_DIR"
-
-            # 1) ЧИНИМ ВЛАДЕНИЕ (вот из-за этого у тебя упало на FETCH_HEAD)
-            # если sudo есть — используем; если нет — пробуем без него
-            if command -v sudo >/dev/null 2>&1; then
-              sudo chown -R "$USER:$USER" "$DEPLOY_DIR" || true
-            else
-              chown -R "$USER:$USER" "$DEPLOY_DIR" || true
-            fi
-
-            # Дополнительно: git любит нормальные права на .git
-            if [ -d "$DEPLOY_DIR/.git" ]; then
-              find "$DEPLOY_DIR/.git" -type d -exec chmod 700 {} \; || true
-              find "$DEPLOY_DIR/.git" -type f -exec chmod 600 {} \; || true
-            fi
-
-            # 2) Убираем "dubious ownership"
-            git config --global --add safe.directory "$DEPLOY_DIR"
-            git config --global --add safe.directory "$DEPLOY_DIR/.git"
-
-            # 3) Проверяем, что это git-репозиторий (если нет — скажем, что делать 1 раз)
-            if [ ! -d "$DEPLOY_DIR/.git" ]; then
-              echo "::error::$DEPLOY_DIR не является git-репозиторием."
-              echo "::error::Выполни один раз на сервере:"
-              echo "  git clone <SSH-URL-ВАШЕГО-РЕПО> $DEPLOY_DIR"
-              echo "  cd $DEPLOY_DIR && git checkout $REPO_BRANCH"
-              exit 1
-            fi
-
-            cd "$DEPLOY_DIR"
-
-            # 4) Обновляем код
-            git fetch --all --prune
-            git reset --hard "origin/$REPO_BRANCH"
-
-            # 5) Пересобираем и поднимаем контейнеры
+            cd /opt/skilldrill
             docker compose pull || true
             docker compose up -d --build
-
-            # 6) Короткий статус
             docker compose ps
           EOF
