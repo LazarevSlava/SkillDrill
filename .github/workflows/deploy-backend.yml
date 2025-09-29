@@ -23,7 +23,7 @@ jobs:
       DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
       SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
       SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
-      DEPLOY_DIR: /opt/skilldrill
+
     steps:
       - name: Checkout (context only)
         uses: actions/checkout@v4
@@ -40,32 +40,33 @@ jobs:
 
       - name: Deploy (git reset + docker compose up)
         run: |
-          ssh -p "${SSH_PORT:-22}" "${DEPLOY_USER}@${DEPLOY_HOST}" << EOF
+          ssh -p "${SSH_PORT:-22}" "${DEPLOY_USER}@${DEPLOY_HOST}" << 'EOF'
             set -euo pipefail
 
-            # На всякий: папка проекта
-            mkdir -p "\${DEPLOY_DIR}"
+            # Константы для удалённой машины (без внешних env — не будет "unbound variable")
+            DEPLOY_DIR=/opt/skilldrill
+            REPO_BRANCH=main
 
-            # Снимаем предупреждение "dubious ownership" раз и навсегда
-            git config --global --add safe.directory "\${DEPLOY_DIR}"
-            git config --global --add safe.directory "\${DEPLOY_DIR}/.git"
+            mkdir -p "$DEPLOY_DIR"
 
-            # Опционально: поправить владение, если вдруг было root (не упадём, если нет sudo)
-            if command -v sudo >/dev/null 2>&1; then
-              sudo chown -R "\${USER}:\${USER}" "\${DEPLOY_DIR}" || true
-            fi
+            # Уберём "dubious ownership" для git
+            git config --global --add safe.directory "$DEPLOY_DIR"
+            git config --global --add safe.directory "$DEPLOY_DIR/.git"
 
-            cd "\${DEPLOY_DIR}"
-
-            # Проверяем, что это git-репо (fail-fast с понятным сообщением)
-            if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-              echo "::error::\${DEPLOY_DIR} не является git-репозиторием. Один раз клонируй репо на сервер."
+            # Проверим, что там git-репозиторий (если нет — дадим понятную подсказку и выходим)
+            if [ ! -d "$DEPLOY_DIR/.git" ]; then
+              echo "::error::$DEPLOY_DIR не является git-репозиторием."
+              echo "::error::Один раз на сервере выполните:"
+              echo "  git clone <SSH-URL-ВАШЕГО-РЕПО> $DEPLOY_DIR"
+              echo "  cd $DEPLOY_DIR && git checkout $REPO_BRANCH"
               exit 1
             fi
 
+            cd "$DEPLOY_DIR"
+
             # Обновляем код
             git fetch --all --prune
-            git reset --hard origin/main
+            git reset --hard "origin/$REPO_BRANCH"
 
             # Пересобираем и поднимаем контейнеры
             docker compose pull || true
@@ -74,6 +75,6 @@ jobs:
             # Короткий статус
             docker compose ps
 
-            # Если нужно — раскомментируй healthcheck под свой роут/порт
+            # При желании можно включить healthcheck:
             # curl -fsS http://127.0.0.1:8080/health || (docker logs --tail=200 skilldrill-api && exit 1)
           EOF
