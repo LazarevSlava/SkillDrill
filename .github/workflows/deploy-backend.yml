@@ -28,22 +28,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Load SSH key (ssh-agent)
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ env.SSH_PRIVATE_KEY }}
+
       - name: Prep known_hosts
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -p "${SSH_PORT:-22}" -H "${DEPLOY_HOST}" >> ~/.ssh/known_hosts
 
-      - name: Create remote dir (once)
+      - name: Ensure remote dirs
         run: |
-          ssh -p "${SSH_PORT:-22}" -i <(printf "%s" "${SSH_PRIVATE_KEY}") "${DEPLOY_USER}@${DEPLOY_HOST}" 'mkdir -p /opt/skilldrill/server'
+          ssh -p "${SSH_PORT:-22}" "${DEPLOY_USER}@${DEPLOY_HOST}" 'mkdir -p /home/deployer/skilldrill/server'
 
-      # Копируем только нужные файлы бэкенда на сервер (как фронт)
       - name: Rsync server/
         uses: Burnett01/rsync-deployments@7.0.2
         with:
           switches: -avz --delete --exclude node_modules --exclude .git
           path: ./server/
-          remote_path: /opt/skilldrill/server/
+          remote_path: /home/deployer/skilldrill/server/
           remote_host: ${{ env.DEPLOY_HOST }}
           remote_user: ${{ env.DEPLOY_USER }}
           remote_key: ${{ env.SSH_PRIVATE_KEY }}
@@ -53,17 +57,16 @@ jobs:
         with:
           switches: -avz
           path: ./docker-compose.yml
-          remote_path: /opt/skilldrill/
+          remote_path: /home/deployer/skilldrill/
           remote_host: ${{ env.DEPLOY_HOST }}
           remote_user: ${{ env.DEPLOY_USER }}
           remote_key: ${{ env.SSH_PRIVATE_KEY }}
 
-      # Никакого git на сервере — просто билдим/поднимаем
       - name: Compose up on server
         run: |
-          ssh -p "${SSH_PORT:-22}" -i <(printf "%s" "${SSH_PRIVATE_KEY}") "${DEPLOY_USER}@${DEPLOY_HOST}" << 'EOF'
+          ssh -p "${SSH_PORT:-22}" "${DEPLOY_USER}@${DEPLOY_HOST}" << 'EOF'
             set -euo pipefail
-            cd /opt/skilldrill
+            cd /home/deployer/skilldrill
             docker compose pull || true
             docker compose up -d --build
             docker compose ps
