@@ -4,20 +4,26 @@ on:
   push:
     branches: [ main ]
     paths:
-      - 'server/**'
-      - 'docker-compose.yml'
-      - '.github/workflows/deploy-backend.yml'
+      - "server/**"
+      - "docker-compose.yml"
+      - ".github/workflows/deploy-backend.yml"
   workflow_dispatch: {}
+
+permissions:
+  contents: read
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-backend
+      cancel-in-progress: false
     env:
       DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
       DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
       SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
       DEPLOY_DIR: /opt/skilldrill
-      SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT || 22 }}
     steps:
       - name: Checkout (context only)
         uses: actions/checkout@v4
@@ -27,28 +33,28 @@ jobs:
         with:
           ssh-private-key: ${{ env.SSH_PRIVATE_KEY }}
 
-      - name: Known hosts
+      - name: Add server to known_hosts
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -p "${{ env.SSH_PORT }}" -H "${{ env.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
+          ssh-keyscan -p "${SSH_PORT:-22}" -H "${DEPLOY_HOST}" >> ~/.ssh/known_hosts
 
       - name: Deploy (git reset + docker compose up)
         run: |
-          ssh -p "${{ env.SSH_PORT }}" "${{ env.DEPLOY_USER }}@${{ env.DEPLOY_HOST }}" << 'EOF'
+          ssh -p "${SSH_PORT:-22}" "${DEPLOY_USER}@${DEPLOY_HOST}" << EOF
             set -euo pipefail
-            cd /opt/skilldrill
+            cd "${DEPLOY_DIR}"
 
-            # обновляем код из main
+            # обновляем код
             git fetch --all --prune
             git reset --hard origin/main
 
-            # поднимаем бэкенд
+            # пересобираем и поднимаем контейнеры
             docker compose pull || true
             docker compose up -d --build
 
-            # короткий статус
+            # быстрый статус
             docker compose ps
 
-            # опционально: быстрый healthcheck API (подставь порт/роут)
+            # опционально: healthcheck (подставь свой порт/роут и убери комментарии)
             # curl -fsS http://127.0.0.1:8080/health || (docker logs --tail=200 skilldrill-api && exit 1)
           EOF
