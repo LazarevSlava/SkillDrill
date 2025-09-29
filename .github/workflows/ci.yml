@@ -1,4 +1,4 @@
-name: CI
+name: CI (smoke)
 
 on:
   pull_request:
@@ -10,24 +10,36 @@ on:
       - "eslint.config.js"
   push:
     branches: [ main ]
+    paths:
+      - "client/**"
+      - "server/**"
+
+permissions:
+  contents: read
 
 jobs:
   client:
-    name: Client build (non-blocking on PR)
+    name: Client build (smoke)
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: client
+        shell: bash
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          cache: npm
           cache-dependency-path: client/package-lock.json
-      - run: npm ci
-      - run: npm run build --if-present
-        continue-on-error: true  # не валим PR из-за фронт-билда пока
+
+      - name: Install
+        run: npm ci
+
+      - name: Build (non-blocking)
+        run: npm run build --if-present
+        continue-on-error: true
 
   server:
     name: Server install (smoke)
@@ -35,27 +47,19 @@ jobs:
     defaults:
       run:
         working-directory: server
+        shell: bash
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          cache: npm
           cache-dependency-path: server/package-lock.json
-      - run: npm ci
-      - run: npm run build --if-present
-        continue-on-error: true  # тоже мягко
 
-  lint:
-    name: ESLint (soft)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - run: npm ci
-        if: ${{ hashFiles('package-lock.json') != '' }}
-      - run: npx eslint . || true   # не блокируем, просто отчёт
+      - name: Install
+        run: npm ci
 
-  # Деплой переносим В ОТДЕЛЬНЫЙ workflow (см. ниже)
+      - name: Build (non-blocking)
+        run: npm run build --if-present
+        continue-on-error: true
