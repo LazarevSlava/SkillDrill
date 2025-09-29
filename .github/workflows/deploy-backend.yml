@@ -42,19 +42,38 @@ jobs:
         run: |
           ssh -p "${SSH_PORT:-22}" "${DEPLOY_USER}@${DEPLOY_HOST}" << EOF
             set -euo pipefail
-            cd "${DEPLOY_DIR}"
 
-            # обновляем код
+            # На всякий: папка проекта
+            mkdir -p "\${DEPLOY_DIR}"
+
+            # Снимаем предупреждение "dubious ownership" раз и навсегда
+            git config --global --add safe.directory "\${DEPLOY_DIR}"
+            git config --global --add safe.directory "\${DEPLOY_DIR}/.git"
+
+            # Опционально: поправить владение, если вдруг было root (не упадём, если нет sudo)
+            if command -v sudo >/dev/null 2>&1; then
+              sudo chown -R "\${USER}:\${USER}" "\${DEPLOY_DIR}" || true
+            fi
+
+            cd "\${DEPLOY_DIR}"
+
+            # Проверяем, что это git-репо (fail-fast с понятным сообщением)
+            if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+              echo "::error::\${DEPLOY_DIR} не является git-репозиторием. Один раз клонируй репо на сервер."
+              exit 1
+            fi
+
+            # Обновляем код
             git fetch --all --prune
             git reset --hard origin/main
 
-            # пересобираем и поднимаем контейнеры
+            # Пересобираем и поднимаем контейнеры
             docker compose pull || true
             docker compose up -d --build
 
-            # быстрый статус
+            # Короткий статус
             docker compose ps
 
-            # опционально: healthcheck (подставь свой порт/роут и убери комментарии)
+            # Если нужно — раскомментируй healthcheck под свой роут/порт
             # curl -fsS http://127.0.0.1:8080/health || (docker logs --tail=200 skilldrill-api && exit 1)
           EOF
