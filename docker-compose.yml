@@ -16,13 +16,9 @@ services:
   mongo:
     image: mongo:7
     container_name: skilldrill-mongo
+    # Оставим порт для Compass через SSH-туннель
     ports:
       - "127.0.0.1:27018:27017"
-    env_file:
-      - ./server/.env
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
     volumes:
       - mongo_data:/data/db
     healthcheck:

@@ -6,11 +6,22 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-      lowercase: true, // автоматом в нижний регистр
+      lowercase: true,
       unique: true,
       minlength: 3,
       maxlength: 32,
-      match: /^[a-z0-9_]+$/, // только латиница, цифры и "_"
+      match: /^[a-z0-9_]+$/,
+    },
+    email: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      // ВАЖНО: делаем "required" только на уровне логики регистрации (ниже в роуте),
+      // чтобы не падать из-за старых пользователей без email.
+      // Здесь оставим без required, а уникальность обеспечим через partial index:
+      // unique: true  // <- НЕ ставим прямо тут
+      // match — простая проверка формата
+      match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
     },
     passwordHash: {
       type: String,
@@ -20,6 +31,12 @@ const userSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-const User = mongoose.model("User", userSchema);
+// Уникальный индекс только для документов, где email — строка.
+// Это позволит не ломать существующие записи без email.
+userSchema.index(
+  { email: 1 },
+  { unique: true, partialFilterExpression: { email: { $type: "string" } } },
+);
 
+const User = mongoose.model("User", userSchema);
 module.exports = User;

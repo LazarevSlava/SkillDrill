@@ -2,14 +2,14 @@ name: CI (smoke)
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths:
       - "client/**"
       - "server/**"
       - ".github/workflows/**"
       - "eslint.config.js"
   push:
-    branches: [ main ]
+    branches: [main]
     paths:
       - "client/**"
       - "server/**"
