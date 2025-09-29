@@ -22,7 +22,7 @@ jobs:
       DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
       DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
       SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-      SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
+      SSH_PORT: ${{ secrets.SSH_PORT }}
 
     steps:
       - name: Checkout
@@ -33,40 +33,31 @@ jobs:
         with:
           ssh-private-key: ${{ env.SSH_PRIVATE_KEY }}
 
-      - name: Prep known_hosts
+      - name: Add server to known_hosts
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -p "${SSH_PORT:-22}" -H "${DEPLOY_HOST}" >> ~/.ssh/known_hosts
 
       - name: Ensure remote dirs
         run: |
-          ssh -p "${SSH_PORT:-22}" "${DEPLOY_USER}@${DEPLOY_HOST}" 'mkdir -p /home/deployer/skilldrill/server'
+          ssh -p "${SSH_PORT:-22}" "${DEPLOY_USER}@${DEPLOY_HOST}" 'mkdir -p "$HOME/skilldrill/server"'
 
-      - name: Rsync server/
-        uses: Burnett01/rsync-deployments@7.0.2
-        with:
-          switches: -avz --delete --exclude node_modules --exclude .git
-          path: ./server/
-          remote_path: /home/deployer/skilldrill/server/
-          remote_host: ${{ env.DEPLOY_HOST }}
-          remote_user: ${{ env.DEPLOY_USER }}
-          remote_key: ${{ env.SSH_PRIVATE_KEY }}
+      - name: Sync backend files
+        run: |
+          rsync -az --delete --exclude node_modules --exclude .git \
+            -e "ssh -p ${SSH_PORT:-22}" \
+            ./server/ "${DEPLOY_USER}@${DEPLOY_HOST}:~/skilldrill/server/"
 
-      - name: Rsync docker-compose.yml
-        uses: Burnett01/rsync-deployments@7.0.2
-        with:
-          switches: -avz
-          path: ./docker-compose.yml
-          remote_path: /home/deployer/skilldrill/
-          remote_host: ${{ env.DEPLOY_HOST }}
-          remote_user: ${{ env.DEPLOY_USER }}
-          remote_key: ${{ env.SSH_PRIVATE_KEY }}
+      - name: Sync compose file
+        run: |
+          rsync -az -e "ssh -p ${SSH_PORT:-22}" \
+            ./docker-compose.yml "${DEPLOY_USER}@${DEPLOY_HOST}:~/skilldrill/"
 
       - name: Compose up on server
         run: |
           ssh -p "${SSH_PORT:-22}" "${DEPLOY_USER}@${DEPLOY_HOST}" << 'EOF'
             set -euo pipefail
-            cd /home/deployer/skilldrill
+            cd "$HOME/skilldrill"
             docker compose pull || true
             docker compose up -d --build
             docker compose ps
