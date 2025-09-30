@@ -1,3 +1,5 @@
+import Button from "../ui/Button";
+
 type PricingProps = { onOpenSignup: () => void };
 
 export default function Pricing({ onOpenSignup }: PricingProps) {
@@ -12,6 +14,7 @@ export default function Pricing({ onOpenSignup }: PricingProps) {
         </p>
 
         <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-3">
+          {/* Free */}
           <div
             className="
               card p-6 transition
@@ -30,14 +33,16 @@ export default function Pricing({ onOpenSignup }: PricingProps) {
               <li>• Базовая аналитика</li>
               <li>• Без карты</li>
             </ul>
-            <button
+            <Button
               onClick={onOpenSignup}
-              className="btn btn-outline mt-6 w-full"
+              variant="outline"
+              className="mt-6 w-full"
             >
               Начать
-            </button>
+            </Button>
           </div>
 
+          {/* Pro */}
           <div
             className="
               relative rounded-3xl p-6 shadow-xl transition
@@ -57,14 +62,16 @@ export default function Pricing({ onOpenSignup }: PricingProps) {
               <li>• Расширенная аналитика</li>
               <li>• Экспорт рекомендаций</li>
             </ul>
-            <button
+            <Button
               onClick={onOpenSignup}
-              className="btn btn-primary mt-6 w-full"
+              variant="primary"
+              className="mt-6 w-full"
             >
               Оформить
-            </button>
+            </Button>
           </div>
 
+          {/* Yearly */}
           <div
             className="
               card p-6 transition
@@ -83,12 +90,13 @@ export default function Pricing({ onOpenSignup }: PricingProps) {
               <li>• Экономия до 30%</li>
               <li>• Приоритет поддержки</li>
             </ul>
-            <button
+            <Button
               onClick={onOpenSignup}
-              className="btn btn-outline mt-6 w-full"
+              variant="outline"
+              className="mt-6 w-full"
             >
               Купить
-            </button>
+            </Button>
           </div>
         </div>
       </div>

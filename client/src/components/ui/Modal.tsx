@@ -1,4 +1,6 @@
 import * as React from "react";
+import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
+import Button from "./Button";
 
 type Props = {
   open: boolean;
@@ -13,51 +15,47 @@ export default function Modal({ open, onClose, title, children }: Props) {
   const [mounted, setMounted] = React.useState(false);
   const labelledById = React.useId();
 
-  // Блокируем скролл body, когда модалка открыта
-  React.useEffect(() => {
-    if (!open) return;
-    const { overflow } = document.body.style;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = overflow;
-    };
-  }, [open]);
+  // Блокируем скролл body через общий хук
+  useBodyScrollLock(open);
 
-  // Фокус и ESC
+  // Фокус/ESC + простой focus trap + enter-анимация
   React.useEffect(() => {
     if (!open) return;
 
-    // маленький enter-эффект для анимации
     const t = requestAnimationFrame(() => setMounted(true));
 
-    // фокус на кнопке закрытия (или первом focusable элементе)
-    closeBtnRef.current?.focus();
+    // Фокус на кнопке закрытия (или первым focusable внутри panel)
+    const focusFirst = () => {
+      if (closeBtnRef.current) {
+        closeBtnRef.current.focus();
+        return;
+      }
+      const firstFocusable = panelRef.current?.querySelector<HTMLElement>(
+        'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])',
+      );
+      firstFocusable?.focus();
+    };
+    focusFirst();
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
-      // простейший focus trap: если Tab уходит из панели — возвращаем
-      if (e.key === "Tab" && panelRef.current) {
-        const focusables = panelRef.current.querySelectorAll<
-          | HTMLButtonElement
-          | HTMLInputElement
-          | HTMLAnchorElement
-          | HTMLTextAreaElement
-          | HTMLSelectElement
-        >(
-          'a[href], button:not([disabled]), textarea, input[type="text"], input[type="email"], input[type="password"], input[type="number"], select, [tabindex]:not([tabindex="-1"])',
-        );
-        if (focusables.length > 0) {
-          const first = focusables[0] as HTMLElement;
-          const last = focusables[focusables.length - 1] as HTMLElement;
-          const active = document.activeElement as HTMLElement | null;
 
-          if (e.shiftKey && active === first) {
-            e.preventDefault();
-            last.focus();
-          } else if (!e.shiftKey && active === last) {
-            e.preventDefault();
-            first.focus();
-          }
+      if (e.key === "Tab" && panelRef.current) {
+        const focusables = panelRef.current.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])',
+        );
+        if (focusables.length === 0) return;
+
+        const first = focusables[0] as HTMLElement;
+        const last = focusables[focusables.length - 1] as HTMLElement;
+        const active = document.activeElement as HTMLElement | null;
+
+        if (e.shiftKey && active === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && active === last) {
+          e.preventDefault();
+          first.focus();
         }
       }
     };
@@ -78,11 +76,12 @@ export default function Modal({ open, onClose, title, children }: Props) {
       role="dialog"
       aria-modal="true"
       aria-labelledby={labelledById}
+      // клики мимо панели закрывают модалку
+      onClick={onClose}
     >
       {/* Backdrop */}
-      <button
-        aria-label="Закрыть модальное окно"
-        onClick={onClose}
+      <div
+        aria-hidden="true"
         className={[
           "absolute inset-0 bg-black/50 transition-opacity",
           mounted ? "opacity-100" : "opacity-0",
@@ -101,6 +100,7 @@ export default function Modal({ open, onClose, title, children }: Props) {
             ? "opacity-100 translate-y-0 scale-100"
             : "opacity-0 translate-y-2 scale-[0.98]",
         ].join(" ")}
+        // не даём клику по панели всплыть до контейнера
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
@@ -110,16 +110,16 @@ export default function Modal({ open, onClose, title, children }: Props) {
           >
             {title}
           </h3>
-          <button
+
+          {/* Close button now uses our shared Button */}
+          <Button
             ref={closeBtnRef}
+            type="button"
             aria-label="Закрыть"
+            variant="ghost"
+            size="sm"
             onClick={onClose}
-            className="
-              rounded-full p-2 transition
-              hover:bg-[color:var(--color-light-blue)]/30
-              focus:outline-none focus:ring-2 focus:ring-[color:var(--color-light-blue)]/50
-              text-[color:var(--color-dark-gray)]
-            "
+            className="rounded-full px-2 py-2 h-auto min-h-0"
           >
             <svg
               viewBox="0 0 24 24"
@@ -133,7 +133,7 @@ export default function Modal({ open, onClose, title, children }: Props) {
                 clipRule="evenodd"
               />
             </svg>
-          </button>
+          </Button>
         </div>
 
         {children}

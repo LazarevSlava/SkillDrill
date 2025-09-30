@@ -1,25 +1,16 @@
-// src/pages/LandingPage.tsx
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/sections/Header";
 import Main from "../components/sections/Main";
 import Footer from "../components/sections/Footer";
 import Modal from "../components/ui/Modal";
 import RegisterForm from "../forms/RegisterForm";
+import Button from "../components/ui/Button";
 
 export default function LandingPage() {
   const [openSignup, setOpenSignup] = useState(false);
   const [openLogin, setOpenLogin] = useState(false);
   const navigate = useNavigate();
-
-  // Если твой Modal уже сам блокирует скролл body на время открытия,
-  // этот эффект можно удалить, чтобы не дублировать.
-  useEffect(() => {
-    document.body.style.overflow = openSignup || openLogin ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [openSignup, openLogin]);
 
   const goApp = () => navigate("/app");
 
@@ -47,19 +38,20 @@ export default function LandingPage() {
             setOpenSignup(false);
             goApp();
           }}
-          // showBottomToggle={false} // по умолчанию и так скрыт
         />
         <p className="mt-3 text-center text-sm text-[color:var(--color-gray-blue)]">
           Уже есть аккаунт?{" "}
-          <button
+          <Button
+            variant="link"
+            size="sm"
             onClick={() => {
               setOpenSignup(false);
               setOpenLogin(true);
             }}
-            className="font-semibold underline text-[color:var(--color-deep-blue)]"
+            className="align-baseline"
           >
             Войти
-          </button>
+          </Button>
         </p>
       </Modal>
 
@@ -71,19 +63,20 @@ export default function LandingPage() {
             setOpenLogin(false);
             goApp();
           }}
-          // showBottomToggle={false}
         />
         <p className="mt-3 text-center text-sm text-[color:var(--color-gray-blue)]">
           Нет аккаунта?{" "}
-          <button
+          <Button
+            variant="link"
+            size="sm"
             onClick={() => {
               setOpenLogin(false);
               setOpenSignup(true);
             }}
-            className="font-semibold underline text-[color:var(--color-deep-blue)]"
+            className="align-baseline"
           >
             Зарегистрироваться
-          </button>
+          </Button>
         </p>
       </Modal>
     </div>

@@ -3,6 +3,7 @@ import { useFormContext } from "react-hook-form";
 import { useNavigate, Link, useOutletContext } from "react-router-dom";
 import type { SetupForm } from "../useSetupForm";
 import { TONES, FOCUSES } from "../useSetupForm";
+import Button from "../../../components/ui/Button";
 
 type Ctx = { go: (to: string) => void };
 
@@ -77,16 +78,13 @@ export default function PreferencesStep() {
       </section>
 
       <div className="flex justify-between">
-        <Link to="/setup/session" className="px-4 py-2 rounded-lg border">
-          ← Назад
+        <Link to="/setup/session">
+          <Button variant="outline">← Назад</Button>
         </Link>
-        <button
-          type="submit"
-          className="px-4 py-2 rounded-lg border"
-          style={{ background: "var(--color-yellow)" }}
-        >
+
+        <Button type="submit" variant="primary">
           Далее →
-        </button>
+        </Button>
       </div>
     </form>
   );

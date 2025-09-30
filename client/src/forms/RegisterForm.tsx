@@ -1,87 +1,14 @@
 // src/forms/RegisterForm.tsx
-import { useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
-
-type Mode = "signin" | "signup";
-type StubMode = "off" | "always" | "fallback";
+import { useRegister } from "../hooks/useRegister";
+import type { Mode } from "../shared/authTypes";
+import Button from "../components/ui/Button";
 
 export type RegisterFormProps = {
   mode?: Mode;
-  onSuccess?: () => void; // если не задан, делаем navigate('/app')
-  stub?: StubMode; // переопределяет .env
+  onSuccess?: () => void; // если не задан, делаем navigate('/setup')
+  stub?: "off" | "always" | "fallback";
   showBottomToggle?: boolean; // по умолчанию false
 };
-
-type FormValues = {
-  username?: string; // используется в signup
-  email: string; // в signin играёт роль username (name)
-  password: string;
-};
-
-// ---- Контракт с бэком ----
-// Сервер отдаёт { ok: true, user: {...} } или { ok: false, error: ... }
-type ApiUser = { id: string; name: string; email?: string; createdAt?: string };
-type ApiOk = { ok: true; user: ApiUser };
-type ApiErrCode =
-  | "name_taken"
-  | "email_taken"
-  | "password_too_short"
-  | "invalid_credentials"
-  | "validation_error"
-  | "name_and_password_required"
-  | "invalid_email"
-  | "server_error";
-type ApiErrorField =
-  | ApiErrCode
-  | { code?: ApiErrCode; message?: string }
-  | string
-  | undefined;
-type ApiError = { ok: false; error?: ApiErrorField };
-type SignupResponse = ApiOk | ApiError;
-type LoginResponse = ApiOk | ApiError;
-
-// env без any
-const viteEnv = (
-  import.meta as unknown as {
-    env?: { VITE_API_BASE_URL?: string; VITE_AUTH_STUB?: StubMode };
-  }
-).env;
-
-const API_BASE = viteEnv?.VITE_API_BASE_URL ?? "http://localhost:8080";
-const ENV_STUB: StubMode = (viteEnv?.VITE_AUTH_STUB ?? "off") as StubMode;
-
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-// Единый fetch с JSON + cookie
-async function jsonFetch<T>(
-  input: RequestInfo | URL,
-  init?: RequestInit,
-): Promise<T> {
-  const res = await fetch(input, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...(init?.headers || {}),
-    },
-    credentials: "include", // cookie-based auth
-  });
-  const data = (await res.json().catch(() => ({}))) as T;
-  return data;
-}
-
-function normalizeLower(s?: string) {
-  return s?.trim().toLowerCase() ?? "";
-}
-
-// Унифицируем разные варианты ошибки бэка: строка | объект | код
-function extractErrorCode(err: ApiErrorField): ApiErrCode | undefined {
-  if (!err) return undefined;
-  if (typeof err === "string") return err as ApiErrCode;
-  if (typeof err === "object" && "code" in err)
-    return (err as { code?: ApiErrCode }).code;
-  return undefined;
-}
 
 export default function RegisterForm({
   mode: initialMode = "signup",
@@ -89,19 +16,18 @@ export default function RegisterForm({
   stub,
   showBottomToggle = false,
 }: RegisterFormProps) {
-  const navigate = useNavigate();
-  const [mode, setMode] = useState<Mode>(initialMode);
-  const [serverError, setServerError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
   const {
+    mode,
+    setMode,
+    serverError,
+    loading,
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
-    reset,
-  } = useForm<FormValues>({
-    defaultValues: { username: "", email: "", password: "" },
-  });
+    errors,
+    isSubmitting,
+    usernameRequired,
+    onSubmit,
+  } = useRegister({ initialMode, onSuccess, stub });
 
   const inputClass =
     "w-full rounded-xl border px-4 py-2 outline-none " +
@@ -110,197 +36,43 @@ export default function RegisterForm({
     "bg-[color:var(--color-white)] text-[color:var(--color-dark-gray)] " +
     "placeholder:text-[color:var(--color-gray-blue)]/70";
 
-  useEffect(() => {
-    reset({ username: "", email: "", password: "" });
-    setServerError(null);
-  }, [mode, reset]);
-
-  const usernameRequired = useMemo(() => mode === "signup", [mode]);
-  const stubMode: StubMode = stub ?? ENV_STUB;
-
-  const onSuccessOrGoApp = () => {
-    const usingProp = typeof onSuccess === "function";
-    console.log("[RegisterForm] onSuccess provided?", usingProp);
-    if (usingProp) {
-      try {
-        onSuccess!();
-      } catch (e) {
-        console.warn("onSuccess threw:", e);
-      }
-    }
-    navigate("/setup"); // всегда переходим
-  };
-  const simulateSuccess = async () => {
-    await sleep(450);
-    onSuccessOrGoApp();
-  };
-
-  const mapErrorCodeToMessage = (
-    code?: ApiErrCode,
-    fallback = "Ошибка сервера",
-  ) => {
-    switch (code) {
-      case "name_taken":
-        return "Это имя уже занято";
-      case "email_taken":
-        return "Этот e-mail уже используется";
-      case "invalid_email":
-        return "Неверный формат e-mail";
-      case "password_too_short":
-        return "Слишком короткий пароль (мин. 6 символов)";
-      case "invalid_credentials":
-        return "Неверные имя пользователя или пароль";
-      case "name_and_password_required":
-        return "Укажите имя пользователя и пароль";
-      case "validation_error":
-        return "Некорректные данные формы";
-      default:
-        return fallback;
-    }
-  };
-  function handleAuthSuccess(payload: ApiOk) {
-    // 1) лог полного ответа
-    console.log("[RegisterForm] auth success payload:", payload);
-
-    // 2) сохраним юзера локально (токен у нас в httpOnly cookie)
-    try {
-      localStorage.setItem("auth:user", JSON.stringify(payload.user));
-    } catch (err) {
-      console.error("Failed to save user in localStorage:", err);
-    }
-
-    // 3) переходим дальше
-    onSuccessOrGoApp();
-  }
-
-  const onSubmit = async (data: FormValues) => {
-    setServerError(null);
-    setLoading(true);
-    try {
-      if (stubMode === "always") {
-        console.warn("[RegisterForm] AUTH_STUB=always → имитируем успех");
-        await simulateSuccess();
-        return;
-      }
-
-      if (mode === "signup") {
-        const name = normalizeLower(data.username);
-        const email = normalizeLower(data.email);
-
-        const payload = await jsonFetch<SignupResponse>(`${API_BASE}/users`, {
-          method: "POST",
-          body: JSON.stringify({
-            name,
-            email, // <-- добавили email в тело запроса
-            password: data.password,
-          }),
-        });
-
-        if (!("ok" in payload) || !payload.ok) {
-          if (stubMode === "fallback") {
-            console.warn(
-              "[RegisterForm] fallback → signup ошибка, имитируем успех",
-            );
-            await simulateSuccess();
-            return;
-          }
-          const code = extractErrorCode((payload as ApiError)?.error);
-          const msg = mapErrorCodeToMessage(code, "Ошибка регистрации");
-          throw new Error(msg);
-        }
-        handleAuthSuccess(payload as ApiOk);
-        return;
-      } else {
-        // signin: используем поле ниже, подписанное как Username
-        const nameForLogin = normalizeLower(data.username ?? data.email);
-        const payload = await jsonFetch<LoginResponse>(
-          `${API_BASE}/users/login`,
-          {
-            method: "POST",
-            body: JSON.stringify({
-              name: nameForLogin,
-              password: data.password,
-            }),
-          },
-        );
-
-        if (!("ok" in payload) || !payload.ok) {
-          if (stubMode === "fallback") {
-            console.warn(
-              "[RegisterForm] fallback → login ошибка, имитируем успех",
-            );
-            await simulateSuccess();
-            return;
-          }
-          const code = extractErrorCode((payload as ApiError)?.error);
-          const msg = mapErrorCodeToMessage(code, "Ошибка входа");
-          throw new Error(msg);
-        }
-        handleAuthSuccess(payload as ApiOk);
-        return;
-      }
-
-      // если всё ок — кука уже установлена бэкендом
-      onSuccessOrGoApp();
-    } catch (e: unknown) {
-      if (stubMode === "fallback") {
-        console.warn(
-          "[RegisterForm] fallback → исключение/сеть, имитируем успех",
-        );
-        await simulateSuccess();
-      } else {
-        setServerError(e instanceof Error ? e.message : "Unexpected error");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="mx-auto max-w-md rounded-2xl bg-[color:var(--color-white)] p-6 shadow-md">
       {/* Верхний переключатель режимов */}
       <div className="mb-6 flex justify-center">
-        <button
+        <Button
           type="button"
-          className={[
-            "btn rounded-r-none",
-            mode === "signin"
-              ? "bg-[color:var(--color-deep-blue)] text-white"
-              : "btn-outline",
-          ].join(" ")}
+          variant={mode === "signin" ? "brand" : "outline"}
+          className="rounded-r-none"
           onClick={() => setMode("signin")}
           aria-pressed={mode === "signin"}
           disabled={loading || isSubmitting}
         >
           Sign In
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
-          className={[
-            "btn rounded-l-none",
-            mode === "signup"
-              ? "bg-[color:var(--color-deep-blue)] text-white"
-              : "btn-outline",
-          ].join(" ")}
+          variant={mode === "signup" ? "brand" : "outline"}
+          className="rounded-l-none"
           onClick={() => setMode("signup")}
           aria-pressed={mode === "signup"}
           disabled={loading || isSubmitting}
         >
           Sign Up
-        </button>
+        </Button>
       </div>
 
       {/* Соц-кнопки (заглушки) */}
       <div className="mb-6 flex flex-col gap-3">
-        <button type="button" className="btn btn-outline w-full" disabled>
+        <Button type="button" variant="outline" disabled className="w-full">
           Continue with Google
-        </button>
-        <button type="button" className="btn btn-outline w-full" disabled>
+        </Button>
+        <Button type="button" variant="outline" disabled className="w-full">
           Continue with GitHub
-        </button>
-        <button type="button" className="btn btn-outline w-full" disabled>
+        </Button>
+        <Button type="button" variant="outline" disabled className="w-full">
           Continue with Apple
-        </button>
+        </Button>
       </div>
 
       {/* Разделитель */}
@@ -389,17 +161,15 @@ export default function RegisterForm({
           </div>
         )}
 
-        <button
+        <Button
           type="submit"
-          className="btn btn-primary w-full disabled:opacity-70"
+          variant="primary" // жёлтый CTA
+          className="w-full"
           disabled={loading || isSubmitting}
+          isLoading={loading || isSubmitting}
         >
-          {loading || isSubmitting
-            ? "Please wait..."
-            : mode === "signup"
-              ? "Create account"
-              : "Sign in"}
-        </button>
+          {mode === "signup" ? "Create account" : "Sign in"}
+        </Button>
       </form>
 
       {/* Нижний переключатель — опционально */}
@@ -408,26 +178,30 @@ export default function RegisterForm({
           {mode === "signup" ? (
             <>
               Уже есть аккаунт?{" "}
-              <button
+              <Button
                 type="button"
-                className="font-semibold underline text-[color:var(--color-deep-blue)]"
+                variant="link"
+                size="sm"
                 onClick={() => setMode("signin")}
                 disabled={loading || isSubmitting}
+                className="align-baseline"
               >
                 Войти
-              </button>
+              </Button>
             </>
           ) : (
             <>
               Нет аккаунта?{" "}
-              <button
+              <Button
                 type="button"
-                className="font-semibold underline text-[color:var(--color-deep-blue)]"
+                variant="link"
+                size="sm"
                 onClick={() => setMode("signup")}
                 disabled={loading || isSubmitting}
+                className="align-baseline"
               >
                 Зарегистрироваться
-              </button>
+              </Button>
             </>
           )}
         </p>
