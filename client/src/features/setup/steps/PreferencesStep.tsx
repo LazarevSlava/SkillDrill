@@ -1,8 +1,8 @@
 // client/src/pages/Setup/Steps/PreferencesStep.tsx
 import { useFormContext } from "react-hook-form";
 import { useNavigate, Link, useOutletContext } from "react-router-dom";
-import type { SetupForm } from "../../../features/setup/useSetupForm";
-import { TONES, FOCUSES } from "../../../features/setup/useSetupForm";
+import type { SetupForm } from "../useSetupForm";
+import { TONES, FOCUSES } from "../useSetupForm";
 
 type Ctx = { go: (to: string) => void };
 

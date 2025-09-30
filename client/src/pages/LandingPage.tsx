@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Header from "../components/sections/Header";
 import Main from "../components/sections/Main";
 import Footer from "../components/sections/Footer";
-import Modal from "../components/Modal";
+import Modal from "../components/ui/Modal";
 import RegisterForm from "../forms/RegisterForm";
 
 export default function LandingPage() {
