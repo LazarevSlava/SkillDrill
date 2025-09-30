@@ -8,7 +8,7 @@ import AuthStub from "./pages/AuthStub";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 
-import SetupPage from "./pages/setup/SetupPage";
+import SetupPage from "./pages/Setup/SetupPage";
 import TopicsStep from "./features/setup/steps/TopicsStep";
 import SessionStep from "./features/setup/steps/SessionStep";
 import PreferencesStep from "./features/setup/steps/PreferencesStep";
