@@ -25,10 +25,20 @@ app.use(cookieParser());
 app.use(express.json());
 
 // ---- Health-check ----
-app.get("/health", (_req, res) => res.json({ ok: true, env: NODE_ENV }));
+app.get("/health", (_req, res) => {
+  res.set("Cache-Control", "no-store");
+  res.json({ ok: true, env: process.env.NODE_ENV || "development" });
+});
 
+// Более “умный” вариант с проверкой Mongo:
+app.get("/ready", (_req, res) => {
+  const state = mongoose.connection.readyState; // 1=connected
+  if (state === 1) {
+    return res.json({ ok: true, db: "connected" });
+  }
+  return res.status(503).json({ ok: false, db: "not_connected" });
+});
 // ---- Routes ----
-// НИЧЕГО не «глотаем»: если есть ошибка — увидим её сразу в логах
 const usersRouter = require("./routes/users");
 app.use("/users", usersRouter);
 
@@ -42,7 +52,6 @@ app.use((err, req, res, next) => {
   res.status(500).json({ ok: false, error: "server_error" });
 });
 
-// 404 в самом низу, после всех роутов
 app.use((_req, res) => {
   res.status(404).send("Not Found");
 });
@@ -53,7 +62,6 @@ app.use((_req, res) => {
     await mongoose.connect(MONGO_URI);
     console.log(
       "[mongo] connected:",
-      // не светим пароль в логах, если он есть
       MONGO_URI.replace(/\/\/.*@/, "//***:***@"),
     );
 
