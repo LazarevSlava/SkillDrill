@@ -3,6 +3,7 @@ import HowItWorks from "./HowItWorks";
 import Features from "./Features";
 import Pricing from "./Pricing";
 import FAQ from "./FAQ";
+import Button from "../ui/Button";
 
 type Props = {
   onOpenSignup: () => void;
@@ -26,12 +27,13 @@ export default function Main({ onOpenSignup }: Props) {
             <p className="mt-2 opacity-90">
               Запусти первое интервью — займёт 15 минут.
             </p>
-            <button
+            <Button
               onClick={onOpenSignup}
-              className="btn btn-primary mt-6 focus:outline-none focus:ring-2 focus:ring-white/50"
+              size="lg"
+              className="mt-6 focus:ring-white/50"
             >
               Начать бесплатно
-            </button>
+            </Button>
           </div>
         </div>
       </section>

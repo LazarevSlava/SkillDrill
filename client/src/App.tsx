@@ -8,11 +8,11 @@ import AuthStub from "./pages/AuthStub";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 
-import SetupPage from "./pages/Setup/SetupPage";
-import TopicsStep from "./pages/Setup/Steps/TopicsStep";
-import SessionStep from "./pages/Setup/Steps/SessionStep";
-import PreferencesStep from "./pages/Setup/Steps/PreferencesStep";
-import ReviewStep from "./pages/Setup/Steps/ReviewStep";
+import SetupPage from "./pages/setup/SetupPage";
+import TopicsStep from "./features/setup/steps/TopicsStep";
+import SessionStep from "./features/setup/steps/SessionStep";
+import PreferencesStep from "./features/setup/steps/PreferencesStep";
+import ReviewStep from "./features/setup/steps/ReviewStep";
 
 import { isSetupCompleted } from "./features/setup/storage";
 

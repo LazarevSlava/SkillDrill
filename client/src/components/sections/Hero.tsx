@@ -1,3 +1,5 @@
+import Button from "../ui/Button";
+
 type HeroProps = { onOpenSignup: () => void };
 
 export default function Hero({ onOpenSignup }: HeroProps) {
@@ -28,12 +30,12 @@ export default function Hero({ onOpenSignup }: HeroProps) {
           </p>
 
           <div className="mt-6 flex flex-wrap items-center gap-3">
-            <button onClick={onOpenSignup} className="btn btn-primary">
+            <Button onClick={onOpenSignup} variant="primary">
               Начать бесплатно
-            </button>
-            <a href="#how" className="btn btn-outline">
+            </Button>
+            <Button as="a" href="#how" variant="outline">
               Как это работает
-            </a>
+            </Button>
           </div>
 
           <div className="mt-6 flex items-center gap-4 text-sm text-[var(--color-gray-blue)]">

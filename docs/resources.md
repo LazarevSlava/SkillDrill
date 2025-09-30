@@ -24,7 +24,12 @@
 
 ## 1.1 Перезапуск / деплой
 
-````bash
+## для локального запуска сервер+БД
+
+docker compose down -v
+docker compose up -d --build
+
+```bash
 ssh -i ~/.ssh/id_rsa_hetzner -N -L 27019:127.0.0.1:27017 deployer@49.12.110.251
 # на сервере
 cd /opt/skilldrill/server
@@ -46,6 +51,9 @@ docker compose ps                      # то же по compose-проекту
 docker logs -f skilldrill-api          # «хвост» логов API
 docker logs -f skilldrill-mongo        # логи Mongo
 docker logs -n 200 skilldrill-api      # последние 200 строк
+docker compose logs -f api
+docker compose logs -f mongo
+
 
 # здоровье Mongo (healthcheck)
 docker ps | grep skilldrill-mongo      # статус: (healthy/starting)
@@ -65,11 +73,11 @@ docker exec -it skilldrill-mongo printenv | grep MONGO_INITDB
 
 ## Remote MongoDB через Compass (Hetzner)
 
-**SSH-туннель (на Mac):**
-```bash
-ssh -i ~/.ssh/id_rsa_hetzner -N \
-  -L 27019:127.0.0.1:27018 \
-  deployer@49.12.110.251
+mongodb://127.0.0.1:27019/skilldrill
+
+**SSH-туннель (на Mac):** когда смотрим сервер
+ssh -i ~/.ssh/id_rsa_hetzner -L 27019:127.0.0.1:27018 deployer@49.12.110.251
+
 
 
 ## in compas
@@ -157,4 +165,4 @@ CI/CD — это автоматизация сборки, тестов и деп
   → `cd server && npm install && npm run dev`
 
 ---
-````
+```
