@@ -2,7 +2,7 @@ import type { ReactNode, ReactElement } from "react";
 import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 
 import LandingPage from "./pages/LandingPage";
-import DashboardStub from "./pages/DashboardStub";
+import DashboardPage from "./pages/Dashboard/DashboardPage";
 import AuthStub from "./pages/AuthStub";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
@@ -93,7 +93,7 @@ export default function App(): ReactElement {
           element={
             <RequireAuth>
               <OnboardingGate>
-                <DashboardStub />
+                <DashboardPage />
               </OnboardingGate>
             </RequireAuth>
           }
