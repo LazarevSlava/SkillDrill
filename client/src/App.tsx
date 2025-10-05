@@ -1,6 +1,5 @@
-// client/src/App.tsx
 import type { ReactNode, ReactElement } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 
 import LandingPage from "./pages/LandingPage";
 import DashboardStub from "./pages/DashboardStub";
@@ -18,6 +17,18 @@ import { isSetupCompleted } from "./features/setup/storage";
 
 // Заглушка авторизации (позже заменим на реальную проверку JWT/куки)
 const isAuthed = () => true;
+
+// ----- layout с фоном/темой/базовой типографикой -----
+function RootLayout(): ReactElement {
+  // app-bg — наши фоновые градиенты из components.css
+  // min-h-dvh — тянем фон на всю высоту вьюпорта
+  // text-brand-dark / dark:text-brand-white — базовый цвет текста из токенов
+  return (
+    <div className="app-bg min-h-dvh text-brand-dark dark:text-brand-white">
+      <Outlet />
+    </div>
+  );
+}
 
 // --- Guards ---
 function RequireAuth({
@@ -54,45 +65,48 @@ function OnboardingGate({
 export default function App(): ReactElement {
   return (
     <Routes>
-      <Route path="/" element={<LandingPage />} />
+      {/* общий лэйаут с нашей фоновой заливкой и цветами */}
+      <Route element={<RootLayout />}>
+        <Route path="/" element={<LandingPage />} />
 
-      {/* Мастер настройки */}
-      <Route
-        path="/setup"
-        element={
-          <RequireAuth>
-            <SetupOnly>
-              <SetupPage />
-            </SetupOnly>
-          </RequireAuth>
-        }
-      >
-        <Route index element={<Navigate to="topics" replace />} />
-        <Route path="topics" element={<TopicsStep />} />
-        <Route path="session" element={<SessionStep />} />
-        <Route path="preferences" element={<PreferencesStep />} />
-        <Route path="review" element={<ReviewStep />} />
+        {/* Мастер настройки */}
+        <Route
+          path="/setup"
+          element={
+            <RequireAuth>
+              <SetupOnly>
+                <SetupPage />
+              </SetupOnly>
+            </RequireAuth>
+          }
+        >
+          <Route index element={<Navigate to="topics" replace />} />
+          <Route path="topics" element={<TopicsStep />} />
+          <Route path="session" element={<SessionStep />} />
+          <Route path="preferences" element={<PreferencesStep />} />
+          <Route path="review" element={<ReviewStep />} />
+        </Route>
+
+        {/* ЛК после онбординга */}
+        <Route
+          path="/dashboard"
+          element={
+            <RequireAuth>
+              <OnboardingGate>
+                <DashboardStub />
+              </OnboardingGate>
+            </RequireAuth>
+          }
+        />
+
+        {/* Прочие страницы */}
+        <Route path="/auth/:mode" element={<AuthStub />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/privacy" element={<Privacy />} />
+
+        {/* 404 → на главную */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
-
-      {/* ЛК после онбординга */}
-      <Route
-        path="/dashboard"
-        element={
-          <RequireAuth>
-            <OnboardingGate>
-              <DashboardStub />
-            </OnboardingGate>
-          </RequireAuth>
-        }
-      />
-
-      {/* Прочие страницы */}
-      <Route path="/auth/:mode" element={<AuthStub />} />
-      <Route path="/terms" element={<Terms />} />
-      <Route path="/privacy" element={<Privacy />} />
-
-      {/* 404 → на главную */}
-      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

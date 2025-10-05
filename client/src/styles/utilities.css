@@ -1,0 +1,17 @@
+/* мелкие утилиты/хелперы */
+/* src/styles/utilities.css */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .mask-fade {
+    -webkit-mask-image: linear-gradient(to bottom, #000, transparent);
+    mask-image: linear-gradient(to bottom, #000, transparent);
+  }
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+  .shadow-soft {
+    box-shadow: var(--shadow-soft);
+  }
+}
