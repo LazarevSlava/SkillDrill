@@ -1,3 +1,4 @@
+// client/src/components/ui/Modal.tsx
 import * as React from "react";
 import { useBodyScrollLock } from "../../hooks/useBodyScrollLock";
 import Button from "./Button";
@@ -15,16 +16,12 @@ export default function Modal({ open, onClose, title, children }: Props) {
   const [mounted, setMounted] = React.useState(false);
   const labelledById = React.useId();
 
-  // Блокируем скролл body через общий хук
   useBodyScrollLock(open);
 
-  // Фокус/ESC + простой focus trap + enter-анимация
   React.useEffect(() => {
     if (!open) return;
-
     const t = requestAnimationFrame(() => setMounted(true));
 
-    // Фокус на кнопке закрытия (или первым focusable внутри panel)
     const focusFirst = () => {
       if (closeBtnRef.current) {
         closeBtnRef.current.focus();
@@ -76,7 +73,6 @@ export default function Modal({ open, onClose, title, children }: Props) {
       role="dialog"
       aria-modal="true"
       aria-labelledby={labelledById}
-      // клики мимо панели закрывают модалку
       onClick={onClose}
     >
       {/* Backdrop */}
@@ -93,25 +89,23 @@ export default function Modal({ open, onClose, title, children }: Props) {
         ref={panelRef}
         className={[
           "relative z-10 w-full max-w-md rounded-2xl p-6 shadow-2xl",
-          "bg-[color:var(--color-white)]",
-          "ring-1 ring-[color:var(--color-light-blue)]/20",
+          "bg-brand-white dark:bg-neutral-900",
+          "ring-1 ring-brand-light/20 dark:ring-neutral-800",
           "transition-all duration-200",
           mounted
             ? "opacity-100 translate-y-0 scale-100"
             : "opacity-0 translate-y-2 scale-[0.98]",
         ].join(" ")}
-        // не даём клику по панели всплыть до контейнера
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
           <h3
             id={labelledById}
-            className="text-xl font-semibold text-[color:var(--color-deep-blue)]"
+            className="text-xl font-semibold text-brand-deep dark:text-brand-white"
           >
             {title}
           </h3>
 
-          {/* Close button now uses our shared Button */}
           <Button
             ref={closeBtnRef}
             type="button"

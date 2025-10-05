@@ -1,3 +1,4 @@
+// client/src/pages/LandingPage.tsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/sections/Header";
@@ -12,10 +13,10 @@ export default function LandingPage() {
   const [openLogin, setOpenLogin] = useState(false);
   const navigate = useNavigate();
 
-  const goApp = () => navigate("/app");
+  const goApp = () => navigate("/dashboard");
 
   return (
-    <div className="min-h-screen bg-[color:var(--color-white)] text-[color:var(--color-dark-gray)]">
+    <div className="text-brand-dark dark:text-brand-white">
       <Header
         onOpenSignup={() => setOpenSignup(true)}
         onOpenLogin={() => setOpenLogin(true)}
@@ -39,7 +40,7 @@ export default function LandingPage() {
             goApp();
           }}
         />
-        <p className="mt-3 text-center text-sm text-[color:var(--color-gray-blue)]">
+        <p className="mt-3 text-center text-sm text-brand-gray-blue dark:text-neutral-400">
           Уже есть аккаунт?{" "}
           <Button
             variant="link"
@@ -64,7 +65,7 @@ export default function LandingPage() {
             goApp();
           }}
         />
-        <p className="mt-3 text-center text-sm text-[color:var(--color-gray-blue)]">
+        <p className="mt-3 text-center text-sm text-brand-gray-blue dark:text-neutral-400">
           Нет аккаунта?{" "}
           <Button
             variant="link"

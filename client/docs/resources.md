@@ -29,6 +29,15 @@
 docker compose down -v
 docker compose up -d --build
 
+# server
+
+ssh -i ~/.ssh/id_rsa_hetzner deployer@49.12.110.251
+
+# server from main
+
+cd /opt/skilldrill
+git pull origin main
+
 ```bash
 ssh -i ~/.ssh/id_rsa_hetzner -N -L 27019:127.0.0.1:27017 deployer@49.12.110.251
 # на сервере

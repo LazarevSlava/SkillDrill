@@ -29,15 +29,12 @@ export default function RegisterForm({
     onSubmit,
   } = useRegister({ initialMode, onSuccess, stub });
 
-  const inputClass =
-    "w-full rounded-xl border px-4 py-2 outline-none " +
-    "border-[color:var(--color-light-blue)] " +
-    "focus:ring-2 focus:ring-[color:var(--color-yellow)] " +
-    "bg-[color:var(--color-white)] text-[color:var(--color-dark-gray)] " +
-    "placeholder:text-[color:var(--color-gray-blue)]/70";
+  // базовый класс поля ввода + подсветка ошибок
+  const inputBase = "input";
+  const invalid = "border-red-300 ring-2 ring-red-200 focus:ring-red-300";
 
   return (
-    <div className="mx-auto max-w-md rounded-2xl bg-[color:var(--color-white)] p-6 shadow-md">
+    <div className="card p-6 mx-auto max-w-md">
       {/* Верхний переключатель режимов */}
       <div className="mb-6 flex justify-center">
         <Button
@@ -77,22 +74,26 @@ export default function RegisterForm({
 
       {/* Разделитель */}
       <div className="my-4 flex items-center">
-        <hr className="flex-grow border-[color:var(--color-light-blue)]/40" />
-        <span className="mx-2 text-sm text-[color:var(--color-gray-blue)]">
+        <hr className="flex-grow border-brand-light/40 dark:border-neutral-700" />
+        <span className="mx-2 text-sm text-brand-gray-blue dark:text-neutral-400">
           or
         </span>
-        <hr className="flex-grow border-[color:var(--color-light-blue)]/40" />
+        <hr className="flex-grow border-brand-light/40 dark:border-neutral-700" />
       </div>
 
       {/* Форма */}
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3">
         {mode === "signup" && (
           <>
-            <label className="text-sm font-medium text-[color:var(--color-dark-gray)]">
+            <label
+              htmlFor="username"
+              className="text-sm font-medium text-brand-dark dark:text-brand-white"
+            >
               Username
             </label>
             <input
-              className={inputClass}
+              id="username"
+              className={`${inputBase} ${errors.username ? invalid : ""}`}
               placeholder="e.g. slava_dev"
               {...register(
                 "username",
@@ -102,19 +103,23 @@ export default function RegisterForm({
               autoComplete="username"
             />
             {errors.username && (
-              <span className="text-sm text-red-500">
+              <span className="text-sm text-red-600">
                 {errors.username.message}
               </span>
             )}
           </>
         )}
 
-        <label className="text-sm font-medium text-[color:var(--color-dark-gray)]">
+        <label
+          htmlFor="email"
+          className="text-sm font-medium text-brand-dark dark:text-brand-white"
+        >
           {mode === "signin" ? "Username" : "Email"}
         </label>
         <input
+          id="email"
           type={mode === "signin" ? "text" : "email"}
-          className={inputClass}
+          className={`${inputBase} ${errors.email ? invalid : ""}`}
           placeholder={mode === "signin" ? "your_username" : "you@example.com"}
           {...register("email", {
             required:
@@ -132,15 +137,19 @@ export default function RegisterForm({
           autoComplete={mode === "signin" ? "username" : "email"}
         />
         {errors.email && (
-          <span className="text-sm text-red-500">{errors.email.message}</span>
+          <span className="text-sm text-red-600">{errors.email.message}</span>
         )}
 
-        <label className="text-sm font-medium text-[color:var(--color-dark-gray)]">
+        <label
+          htmlFor="password"
+          className="text-sm font-medium text-brand-dark dark:text-brand-white"
+        >
           Password
         </label>
         <input
+          id="password"
           type="password"
-          className={inputClass}
+          className={`${inputBase} ${errors.password ? invalid : ""}`}
           placeholder="••••••••"
           {...register("password", {
             required: "Password is required",
@@ -150,7 +159,7 @@ export default function RegisterForm({
           autoComplete={mode === "signin" ? "current-password" : "new-password"}
         />
         {errors.password && (
-          <span className="text-sm text-red-500">
+          <span className="text-sm text-red-600">
             {errors.password.message}
           </span>
         )}
@@ -174,7 +183,7 @@ export default function RegisterForm({
 
       {/* Нижний переключатель — опционально */}
       {showBottomToggle && (
-        <p className="mt-3 text-center text-sm text-[color:var(--color-gray-blue)]">
+        <p className="mt-3 text-center text-sm text-brand-gray-blue dark:text-neutral-400">
           {mode === "signup" ? (
             <>
               Уже есть аккаунт?{" "}

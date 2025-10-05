@@ -1,0 +1,112 @@
+/*  “рецепты” для карточек, кнопок, инпутов и т.д. с @apply */
+@layer components {
+  /* Контейнер секции */
+  .section {
+    @apply mx-auto px-6 py-16;
+    max-width: var(--container-max);
+  }
+
+  /* Карточка */
+  .card {
+    @apply rounded-2xl bg-white shadow-card border;
+    border-color: color-mix(in oklab, var(--color-light-blue), transparent 60%);
+  }
+  .dark .card {
+    @apply bg-neutral-900 border-neutral-800;
+  }
+
+  /* Кнопки (БЭМ-стиль, без глобального влияния) */
+  .btn {
+    @apply inline-flex items-center justify-center rounded-2xl px-6 py-3
+             font-semibold transition shadow-soft select-none;
+  }
+  .btn-primary {
+    background-color: var(--color-yellow);
+    color: var(--color-dark-gray);
+  }
+  .btn-primary:hover {
+    filter: brightness(0.95);
+  }
+
+  .btn-outline {
+    @apply border;
+    border-color: var(--color-deep-blue);
+    color: var(--color-deep-blue);
+  }
+  .btn-outline:hover {
+    background-color: var(--color-deep-blue);
+    color: white;
+  }
+
+  /* Навигация */
+  .nav-link {
+    @apply inline-flex items-center gap-2 text-sm font-medium;
+    color: var(--color-deep-blue);
+  }
+  .nav-link:hover {
+    text-decoration: underline;
+  }
+
+  /* Хиро */
+  .hero-title {
+    @apply text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight;
+    color: var(--color-dark-gray);
+  }
+  .hero-subtitle {
+    @apply mt-4 text-lg md:text-xl;
+    color: var(--color-gray-blue);
+  }
+  .dark .hero-title {
+    color: var(--color-white);
+  }
+  .dark .hero-subtitle {
+    color: color-mix(in oklab, var(--color-light-blue), transparent 30%);
+  }
+
+  /* Бейдж */
+  .badge {
+    @apply inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium;
+    background: color-mix(in oklab, var(--color-light-blue), transparent 70%);
+    color: var(--color-deep-blue);
+  }
+
+  /* Поля форм */
+  .input {
+    @apply w-full rounded-xl border px-4 py-3 text-base outline-none ring-0;
+    border-color: color-mix(in oklab, var(--color-light-blue), transparent 60%);
+  }
+  .input:focus {
+    @apply border-transparent ring-2;
+    --tw-ring-color: var(--color-deep-blue);
+  }
+
+  /* Фоновые пятна */
+  .app-bg {
+    background:
+      radial-gradient(
+        1200px 800px at 80% -10%,
+        color-mix(in oklab, var(--color-yellow), transparent 80%),
+        transparent
+      ),
+      radial-gradient(
+        1000px 600px at -10% 20%,
+        color-mix(in oklab, var(--color-light-blue), transparent 70%),
+        transparent
+      ),
+      var(--color-white);
+  }
+  .dark .app-bg {
+    background:
+      radial-gradient(
+        1200px 800px at 80% -10%,
+        color-mix(in oklab, var(--color-yellow), transparent 85%),
+        transparent
+      ),
+      radial-gradient(
+        1000px 600px at -10% 20%,
+        color-mix(in oklab, var(--color-deep-blue), transparent 60%),
+        transparent
+      ),
+      #0b0d10;
+  }
+}

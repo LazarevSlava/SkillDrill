@@ -36,16 +36,16 @@ const base =
 
 const variants: Record<Variant, string> = {
   primary:
-    "bg-[color:var(--color-yellow)] text-[color:var(--color-dark-gray)] hover:bg-[color:var(--color-yellow)]/90 focus:ring-[color:var(--color-yellow)]/50",
+    "bg-brand-yellow text-brand-dark hover:bg-brand-yellow/90 focus:ring-brand-yellow/50",
   brand:
-    "bg-[color:var(--color-deep-blue)] text-white hover:bg-[color:var(--color-gray-blue)] focus:ring-[color:var(--color-light-blue)]",
+    "bg-brand-deep text-white hover:bg-brand-gray-blue focus:ring-brand-light",
   secondary:
-    "bg-[color:var(--color-light-blue)] text-[color:var(--color-dark-gray)] hover:bg-[color:var(--color-gray-blue)]/40 focus:ring-[color:var(--color-light-blue)]",
+    "bg-brand-light text-brand-dark hover:bg-brand-gray-blue/40 focus:ring-brand-light",
   outline:
-    "bg-[color:var(--color-white)] text-[color:var(--color-dark-gray)] border border-[color:var(--color-light-blue)] hover:bg-[color:var(--color-light-blue)]/15 focus:ring-[color:var(--color-light-blue)]",
+    "bg-brand-white text-brand-dark border border-brand-light hover:bg-brand-light/15 focus:ring-brand-light",
   ghost:
-    "bg-transparent text-[color:var(--color-dark-gray)] hover:bg-[color:var(--color-light-blue)]/30 focus:ring-[color:var(--color-light-blue)]",
-  link: "bg-transparent text-[color:var(--color-deep-blue)] underline underline-offset-2 hover:opacity-80 focus:ring-[color:var(--color-light-blue)]",
+    "bg-transparent text-brand-dark hover:bg-brand-light/30 focus:ring-brand-light",
+  link: "bg-transparent text-brand-deep underline underline-offset-2 hover:opacity-80 focus:ring-brand-light",
 };
 
 const sizes: Record<Size, string> = {
