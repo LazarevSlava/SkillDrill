@@ -3,6 +3,7 @@ import { useFormContext } from "react-hook-form";
 import { useNavigate, Link } from "react-router-dom";
 import type { SetupFormInput } from "../../../features/setup/useSetupForm";
 import { finalizeSetup } from "../../../features/setup/useSetupForm"; // markSetupCompleted + clearSetupDraft
+import Button from "../../../components/ui/Button";
 
 export default function ReviewStep() {
   // Контекст формы соответствует провайдеру: <SetupFormInput>
@@ -11,7 +12,6 @@ export default function ReviewStep() {
 
   const v = getValues(); // снимок текущих значений формы (input-вид)
 
-  // Убираем неиспользуемый аргумент, чтобы не ругался no-unused-vars
   const onSubmit = handleSubmit(() => {
     // тут можно сделать реальный POST /api/setup при необходимости
     finalizeSetup();
@@ -20,9 +20,11 @@ export default function ReviewStep() {
 
   return (
     <form className="space-y-6" onSubmit={onSubmit}>
-      <h2 className="text-lg font-medium">Проверь настройки</h2>
+      <h2 className="text-lg md:text-xl font-semibold text-brand-deep dark:text-brand-white">
+        Проверь настройки
+      </h2>
 
-      <ul className="text-sm text-gray-700 space-y-1">
+      <ul className="text-sm text-brand-dark dark:text-neutral-300 space-y-1">
         <li>
           <b>Темы:</b> {v.topics?.length ? v.topics.join(", ") : "—"}
         </li>
@@ -47,16 +49,13 @@ export default function ReviewStep() {
       </ul>
 
       <div className="flex justify-between">
-        <Link to="/setup/preferences" className="px-4 py-2 rounded-lg border">
+        <Link to="/setup/preferences" className="btn btn-outline">
           ← Назад
         </Link>
-        <button
-          type="submit"
-          className="px-4 py-2 rounded-lg border"
-          style={{ background: "var(--color-yellow)" }}
-        >
+
+        <Button type="submit" variant="primary">
           Сохранить и продолжить → /dashboard
-        </button>
+        </Button>
       </div>
     </form>
   );

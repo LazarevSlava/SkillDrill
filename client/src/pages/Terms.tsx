@@ -1,61 +1,107 @@
+// client/src/pages/Terms.tsx
+import Section from "../components/ui/Section";
+import Card from "../components/ui/Card";
+
 export default function Terms() {
   return (
-    <main className="min-h-screen bg-[color:var(--color-light-gray)] py-12 px-4 flex justify-center">
-      <div className="prose prose-neutral max-w-3xl bg-[color:var(--color-white)] rounded-2xl shadow p-8">
-        <h1 className="text-3xl font-bold [color:var(--color-deep-blue)]">
+    <Section className="max-w-3xl py-12">
+      <Card className="p-6 md:p-8">
+        <h1 className="text-3xl md:text-4xl font-bold text-brand-deep dark:text-brand-white">
           Условия использования
         </h1>
-        <p className="text-sm [color:var(--color-gray-blue)] mb-8">
-          Последнее обновление: 10 сентября 2025
+        <p className="mt-2 text-sm text-brand-gray-blue dark:text-neutral-400">
+          Последнее обновление:{" "}
+          <time dateTime="2025-09-10">10 сентября 2025</time>
         </p>
 
-        <h2>1. Принятие условий</h2>
-        <p>Используя SkillDrill, вы соглашаетесь с этими условиями.</p>
+        <div className="mt-8 space-y-6 text-brand-dark dark:text-neutral-300">
+          <section>
+            <h2 className="text-xl font-semibold text-brand-deep dark:text-brand-white">
+              1. Принятие условий
+            </h2>
+            <p className="mt-2">
+              Используя SkillDrill, вы соглашаетесь с этими условиями.
+            </p>
+          </section>
 
-        <h2>2. Аккаунт</h2>
-        <p>
-          Вы отвечаете за конфиденциальность логина/пароля и действия в
-          аккаунте.
-        </p>
+          <section>
+            <h2 className="text-xl font-semibold text-brand-deep dark:text-brand-white">
+              2. Аккаунт
+            </h2>
+            <p className="mt-2">
+              Вы отвечаете за конфиденциальность логина/пароля и действия в
+              аккаунте.
+            </p>
+          </section>
 
-        <h2>3. Допустимое использование</h2>
-        <p>
-          Нельзя нарушать закон, пытаться взломать сервис, скрейпить контент и
-          т.д.
-        </p>
+          <section>
+            <h2 className="text-xl font-semibold text-brand-deep dark:text-brand-white">
+              3. Допустимое использование
+            </h2>
+            <p className="mt-2">
+              Нельзя нарушать закон, пытаться взломать сервис, скрейпить контент
+              и т.д.
+            </p>
+          </section>
 
-        <h2>4. Оплата и тарифы</h2>
-        <p>
-          Бесплатный лимит, затем платные планы; возвраты по политике биллинга.
-        </p>
+          <section>
+            <h2 className="text-xl font-semibold text-brand-deep dark:text-brand-white">
+              4. Оплата и тарифы
+            </h2>
+            <p className="mt-2">
+              Бесплатный лимит, затем платные планы; возвраты по политике
+              биллинга.
+            </p>
+          </section>
 
-        <h2>5. Интеллектуальная собственность</h2>
-        <p>
-          Контент и код SkillDrill защищены правом. Запрещено копирование без
-          разрешения.
-        </p>
+          <section>
+            <h2 className="text-xl font-semibold text-brand-deep dark:text-brand-white">
+              5. Интеллектуальная собственность
+            </h2>
+            <p className="mt-2">
+              Контент и код SkillDrill защищены правом. Запрещено копирование
+              без разрешения.
+            </p>
+          </section>
 
-        <h2>6. Отказ от гарантий</h2>
-        <p>
-          Сервис предоставляется «как есть». Мы стремимся к доступности, но SLA
-          не гарантируем.
-        </p>
+          <section>
+            <h2 className="text-xl font-semibold text-brand-deep dark:text-brand-white">
+              6. Отказ от гарантий
+            </h2>
+            <p className="mt-2">
+              Сервис предоставляется «как есть». Мы стремимся к доступности, но
+              SLA не гарантируем.
+            </p>
+          </section>
 
-        <h2>7. Ограничение ответственности</h2>
-        <p>
-          Мы не отвечаем за косвенные убытки. Ответственность ограничена
-          уплаченной суммой за 3 мес.
-        </p>
+          <section>
+            <h2 className="text-xl font-semibold text-brand-deep dark:text-brand-white">
+              7. Ограничение ответственности
+            </h2>
+            <p className="mt-2">
+              Мы не отвечаем за косвенные убытки. Ответственность ограничена
+              уплаченной суммой за 3 мес.
+            </p>
+          </section>
 
-        <h2>8. Изменения условий</h2>
-        <p>
-          Мы можем обновлять документ; дата обновления выше. Существенные
-          изменения — уведомим.
-        </p>
+          <section>
+            <h2 className="text-xl font-semibold text-brand-deep dark:text-brand-white">
+              8. Изменения условий
+            </h2>
+            <p className="mt-2">
+              Мы можем обновлять документ; дата обновления выше. Существенные
+              изменения — уведомим.
+            </p>
+          </section>
 
-        <h2>9. Контакты</h2>
-        <p>Email: support@skilldrill.app</p>
-      </div>
-    </main>
+          <section>
+            <h2 className="text-xl font-semibold text-brand-deep dark:text-brand-white">
+              9. Контакты
+            </h2>
+            <p className="mt-2">Email: support@skilldrill.app</p>
+          </section>
+        </div>
+      </Card>
+    </Section>
   );
 }

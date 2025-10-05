@@ -3,6 +3,7 @@ import { useFormContext } from "react-hook-form";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import type { SetupForm } from "../../../features/setup/useSetupForm";
 import { ALL_TOPICS } from "../../../features/setup/useSetupForm";
+import Button from "../../../components/ui/Button";
 
 type Ctx = { go: (to: string) => void };
 
@@ -33,8 +34,13 @@ export default function TopicsStep() {
       }}
     >
       <section>
-        <div className="mb-2 font-medium">Темы и навыки</div>
-        <p className="text-sm text-gray-600 mb-3">Выбери одну или несколько.</p>
+        <div className="mb-2 font-medium text-brand-deep dark:text-brand-white">
+          Темы и навыки
+        </div>
+        <p className="mb-3 text-sm text-brand-gray-blue dark:text-neutral-400">
+          Выбери одну или несколько.
+        </p>
+
         <div className="flex flex-wrap gap-2">
           {ALL_TOPICS.map((t) => {
             const selected = topics.includes(t);
@@ -42,14 +48,22 @@ export default function TopicsStep() {
               <button
                 key={t}
                 type="button"
+                aria-pressed={selected}
                 onClick={() => toggle(t)}
-                className={`px-3 py-1 rounded-2xl border ${selected ? "bg-yellow-100 border-yellow-400" : ""}`}
+                className={[
+                  "px-3 py-1 rounded-2xl border cursor-pointer transition",
+                  "focus:outline-none focus:ring-2 focus:ring-brand-light",
+                  selected
+                    ? "bg-brand-yellow/20 border-brand-yellow text-brand-dark"
+                    : "border-brand-light hover:bg-brand-light/15 dark:border-neutral-700 dark:hover:bg-neutral-800/50",
+                ].join(" ")}
               >
                 {t}
               </button>
             );
           })}
         </div>
+
         {formState.errors.topics && (
           <p className="mt-2 text-sm text-red-600">
             {formState.errors.topics.message as string}
@@ -58,13 +72,9 @@ export default function TopicsStep() {
       </section>
 
       <div className="flex justify-end">
-        <button
-          type="submit"
-          className="px-4 py-2 rounded-lg border"
-          style={{ background: "var(--color-yellow)" }}
-        >
+        <Button type="submit" variant="primary">
           Далее →
-        </button>
+        </Button>
       </div>
     </form>
   );
