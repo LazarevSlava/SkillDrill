@@ -74,6 +74,12 @@ docker exec -it skilldrill-mongo printenv | grep MONGO_INITDB
 
 ---
 
+## Где лежит сид: /app/scripts/seedSessionTemplates.js
+
+Как запускать в docker: docker compose exec api sh -lc 'node scripts/seedSessionTemplates.js'
+
+Что делает: upsert по slug без дублей.
+
 ## 2. Базы данных
 
 - **Тип:** MongoDB
