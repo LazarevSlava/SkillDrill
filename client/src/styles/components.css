@@ -37,6 +37,12 @@
     background-color: var(--color-deep-blue);
     color: white;
   }
+  .btn-block {
+    @apply w-full;
+  }
+  .btn-nowrap {
+    @apply whitespace-nowrap;
+  }
 
   /* Навигация */
   .nav-link {

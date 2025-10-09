@@ -10,10 +10,11 @@ export default function SessionCard({
   isTemplate?: boolean;
 }) {
   return (
-    <div className="card p-5 flex flex-col gap-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="text-lg font-semibold text-[color:var(--color-deep-blue)]">
+    <div className="card p-5 flex flex-col gap-4 h-full">
+      {/* верх: заголовок + статус фиксированного размера, чтобы не прыгал */}
+      <div className="flex items-start justify-between gap-3 min-h-[2.25rem]">
+        <div className="min-w-0">
+          <h3 className="text-lg font-semibold text-[color:var(--color-deep-blue)] truncate">
             {data.title}
           </h3>
           <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-[color:var(--color-gray-blue)]">
@@ -23,10 +24,15 @@ export default function SessionCard({
             <span className="badge">{data.durationMin} мин</span>
           </div>
         </div>
-        {!isTemplate && <StatusBadge status={data.status} />}
+        {!isTemplate && (
+          <div className="shrink-0">
+            <StatusBadge status={data.status} />
+          </div>
+        )}
       </div>
 
-      <div className="text-sm text-[color:var(--color-gray-blue)]">
+      {/* середина: мета-инфо одинаковой высоты */}
+      <div className="text-sm text-[color:var(--color-gray-blue)] min-h-[2.5rem]">
         {data.status === "scheduled" && (
           <p>
             Начало:{" "}
@@ -45,16 +51,21 @@ export default function SessionCard({
         )}
       </div>
 
-      <div className="mt-auto flex items-center gap-3">
+      {/* низ: всегда две колонки, кнопки одинаковой ширины */}
+      <div
+        className={`mt-auto grid gap-3 ${isTemplate ? "grid-cols-1" : "grid-cols-2"}`}
+      >
         {isTemplate ? (
           <>
-            <button className="btn btn-primary">Создать из шаблона</button>
-            <button className="btn btn-outline">Предпросмотр</button>
+            <button className="btn btn-primary w-full leading-tight">
+              Создать из шаблона
+            </button>
+            <button className="btn btn-outline w-full">Предпросмотр</button>
           </>
         ) : (
           <>
-            <button className="btn btn-primary">Запустить</button>
-            <button className="btn btn-outline">Редактировать</button>
+            <button className="btn btn-primary w-full">Запустить</button>
+            <button className="btn btn-outline w-full">Редактировать</button>
           </>
         )}
       </div>
