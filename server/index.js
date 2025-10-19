@@ -40,7 +40,17 @@ app.get("/ready", (_req, res) => {
 });
 // ---- Routes ----
 const usersRouter = require("./routes/users");
+const sessionTemplatesRouter = require("./routes/sessionTemplates");
+const userTemplatesRouter = require("./routes/userTemplates");
+const sessionsRouter = require("./routes/sessions");
+const runsRouter = require("./routes/runs");
+const dashboardRouter = require("./routes/dashboard");
 app.use("/users", usersRouter);
+app.use("/session-templates", sessionTemplatesRouter);
+app.use("/user-templates", userTemplatesRouter);
+app.use("/sessions", sessionsRouter);
+app.use("/runs", runsRouter);
+app.use("/dashboard", dashboardRouter);
 
 // ---- Error handlers ----
 // централизованный обработчик ошибок (если где-то next(err))

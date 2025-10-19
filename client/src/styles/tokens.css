@@ -1,6 +1,5 @@
 /* дизайн-токены: цвета, радиусы, шрифты, z-index и т.п. */
 :root {
-  /* Цвета (палитра из ТЗ) */
   --color-deep-blue: #3b5a72;
   --color-light-blue: #afc2d5;
   --color-white: #ffffff;

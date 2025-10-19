@@ -3,8 +3,6 @@
 Здесь собрана общая информация по проекту SkillDrill.  
 ⚠️ ВНИМАНИЕ: никаких паролей, ключей и токенов сюда не кладём. Только общая справка.
 
----
-
 ## 1. Серверы
 
 ### Production (боевой сервер)
@@ -40,11 +38,6 @@ git pull origin main
 
 ```bash
 ssh -i ~/.ssh/id_rsa_hetzner -N -L 27019:127.0.0.1:27017 deployer@49.12.110.251
-# на сервере
-cd /opt/skilldrill/server
-
-# подтянуть код (если деплой из Git)
-git fetch && git reset --hard origin/main
 
 # поднять/обновить контейнеры
 docker compose up -d
@@ -70,9 +63,13 @@ docker ps | grep skilldrill-mongo      # статус: (healthy/starting)
 docker exec -it skilldrill-api printenv | grep -E 'NODE_ENV|PORT|MONGO_URI'
 docker exec -it skilldrill-mongo printenv | grep MONGO_INITDB
 
-
-
 ---
+
+## Где лежит сид: /app/scripts/seedSessionTemplates.js
+
+Как запускать в docker: docker compose exec api sh -lc 'node scripts/seedSessionTemplates.js'
+
+Что делает: upsert по slug без дублей.
 
 ## 2. Базы данных
 
@@ -88,11 +85,8 @@ mongodb://127.0.0.1:27019/skilldrill
 ssh -i ~/.ssh/id_rsa_hetzner -L 27019:127.0.0.1:27018 deployer@49.12.110.251
 
 
-
 ## in compas
 mongodb://root:<root_pass>@localhost:27019/skilldrill?authSource=admin
-
-
 
 ---
 
@@ -107,9 +101,6 @@ mongodb://root:<root_pass>@localhost:27019/skilldrill?authSource=admin
 ---
 
 ## 4. CI/CD (Continuous Integration / Continuous Deployment)
-
-**Что это:**
-CI/CD — это автоматизация сборки, тестов и деплоя.
 
 - **CI (Continuous Integration)** → проверка кода при каждом коммите (линтеры, тесты).
 - **CD (Continuous Deployment)** → автоматический деплой после пуша в `main` или другой ветки.
@@ -174,4 +165,14 @@ CI/CD — это автоматизация сборки, тестов и деп
   → `cd server && npm install && npm run dev`
 
 ---
+
+## просмотр структуры проекта где цифра это глубина
+tree -L 6 -I 'node_modules|.git|dist|build|.next|.turbo|coverage|*.log|.DS_Store'
+
+
+## lint
+npm run lint
+## prittier
+npm run format
+
 ```

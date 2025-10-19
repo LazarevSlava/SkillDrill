@@ -2,11 +2,20 @@ import StatusBadge from "./StatusBadge";
 import { formatDate } from "./helpers";
 import type { Session } from "./helpers";
 
+export type SessionCardData = Session & {
+  /** Вспомогательные штуки для отображения/кнопок — все необязательные */
+  tags?: string[];
+  isTemplate?: boolean;
+  onStart?: () => Promise<void>;
+  onEdit?: () => void;
+  onCreateFromTemplate?: () => Promise<void>;
+};
+
 export default function SessionCard({
   data,
   isTemplate = false,
 }: {
-  data: Session;
+  data: SessionCardData; // ⬅️ было: Session
   isTemplate?: boolean;
 }) {
   return (
@@ -22,6 +31,12 @@ export default function SessionCard({
             <span className="badge">Уровень: {data.level}</span>
             <span className="badge">Сложность: {data.difficulty}</span>
             <span className="badge">{data.durationMin} мин</span>
+            {/* опционально покажем теги, если есть */}
+            {data.tags?.slice(0, 3).map((t) => (
+              <span key={t} className="badge">
+                {t}
+              </span>
+            ))}
           </div>
         </div>
         {!isTemplate && (
@@ -57,15 +72,22 @@ export default function SessionCard({
       >
         {isTemplate ? (
           <>
-            <button className="btn btn-primary w-full leading-tight">
+            <button
+              className="btn btn-primary w-full leading-tight"
+              onClick={data.onCreateFromTemplate}
+            >
               Создать из шаблона
             </button>
             <button className="btn btn-outline w-full">Предпросмотр</button>
           </>
         ) : (
           <>
-            <button className="btn btn-primary w-full">Запустить</button>
-            <button className="btn btn-outline w-full">Редактировать</button>
+            <button className="btn btn-primary w-full" onClick={data.onStart}>
+              Запустить
+            </button>
+            <button className="btn btn-outline w-full" onClick={data.onEdit}>
+              Редактировать
+            </button>
           </>
         )}
       </div>

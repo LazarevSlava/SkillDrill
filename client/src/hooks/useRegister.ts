@@ -11,13 +11,55 @@ import {
   normalizeLower,
   sleep,
 } from "../shared/authUtils";
-import type { ApiOk, ApiError, FormValues, Mode } from "../shared/authTypes";
+import type {
+  ApiOk,
+  ApiError,
+  FormValues,
+  Mode,
+  ApiErrCode,
+} from "../shared/authTypes";
+import { isSetupCompleted } from "../features/setup/storage";
 
 export type UseRegisterOpts = {
   initialMode?: Mode;
-  onSuccess?: () => void; // если не задан, делаем navigate('/setup')
-  stub?: StubMode; // переопределяет .env
+  onSuccess?: () => void; // если не задан, делаем дефолтный navigate
+  stub?: StubMode;
 };
+
+// Разрешённые коды ошибок — для безопасного сопоставления
+const KNOWN_ERR_CODES = new Set<ApiErrCode>([
+  "name_taken",
+  "email_taken",
+  "invalid_email",
+  "password_too_short",
+  "invalid_credentials",
+  "name_and_password_required",
+  "validation_error",
+]);
+
+function asApiErrCode(s?: string): ApiErrCode | undefined {
+  return s && KNOWN_ERR_CODES.has(s as ApiErrCode)
+    ? (s as ApiErrCode)
+    : undefined;
+}
+
+function isApiOk(payload: unknown): payload is ApiOk {
+  return (
+    typeof payload === "object" &&
+    payload !== null &&
+    "ok" in payload &&
+    payload.ok === true
+  );
+}
+
+function isApiError(payload: unknown): payload is ApiError {
+  return (
+    typeof payload === "object" &&
+    payload !== null &&
+    "ok" in payload &&
+    payload.ok === false
+  );
+}
 
 export function useRegister({
   initialMode = "signup",
@@ -46,31 +88,31 @@ export function useRegister({
   const usernameRequired = useMemo(() => mode === "signup", [mode]);
   const stubMode: StubMode = stub ?? AUTH_STUB;
 
-  const onSuccessOrGoApp = () => {
-    const usingProp = typeof onSuccess === "function";
-    if (usingProp) {
+  const afterSuccess = () => {
+    if (typeof onSuccess === "function") {
       try {
-        onSuccess!();
-      } catch (e) {
-        console.warn("onSuccess threw:", e);
+        onSuccess();
+      } catch {
+        /* ignore onSuccess errors intentionally */
       }
+      return;
     }
-    navigate("/setup");
+    const done = isSetupCompleted();
+    navigate(done ? "/dashboard" : "/setup", { replace: true });
   };
 
   const simulateSuccess = async () => {
     await sleep(450);
-    onSuccessOrGoApp();
+    afterSuccess();
   };
 
   function handleAuthSuccess(payload: ApiOk) {
-    console.log("[Register] auth success:", payload);
     try {
       localStorage.setItem("auth:user", JSON.stringify(payload.user));
-    } catch (err) {
-      console.error("Failed to save user in localStorage:", err);
+    } catch {
+      /* ignore localStorage errors (quota/deny) */
     }
-    onSuccessOrGoApp();
+    afterSuccess();
   }
 
   const onSubmit = async (data: FormValues) => {
@@ -78,7 +120,6 @@ export function useRegister({
     setLoading(true);
     try {
       if (stubMode === "always") {
-        console.warn("[Register] AUTH_STUB=always → имитируем успех");
         await simulateSuccess();
         return;
       }
@@ -92,46 +133,53 @@ export function useRegister({
           password: data.password,
         });
 
-        if (!("ok" in payload) || !payload.ok) {
+        if (!isApiOk(payload)) {
           if (stubMode === "fallback") {
-            console.warn(
-              "[Register] fallback → signup ошибка, имитируем успех",
-            );
             await simulateSuccess();
             return;
           }
-          const code = extractErrorCode((payload as ApiError)?.error);
+          const code = isApiError(payload)
+            ? extractErrorCode(payload.error)
+            : undefined;
           const msg = mapErrorCodeToMessage(code, "Ошибка регистрации");
           throw new Error(msg);
         }
-        handleAuthSuccess(payload as ApiOk);
-        return;
+
+        handleAuthSuccess(payload);
       } else {
-        const nameForLogin = normalizeLower(data.username ?? data.email);
+        // signin: поддерживаем ввод в username ИЛИ в email
+        const rawLogin = data.username?.trim() || data.email?.trim() || "";
+        const nameForLogin = normalizeLower(rawLogin);
+
         const payload = await apiLogin({
           name: nameForLogin,
           password: data.password,
         });
 
-        if (!("ok" in payload) || !payload.ok) {
+        if (!isApiOk(payload)) {
           if (stubMode === "fallback") {
-            console.warn("[Register] fallback → login ошибка, имитируем успех");
             await simulateSuccess();
             return;
           }
-          const code = extractErrorCode((payload as ApiError)?.error);
+          const code = isApiError(payload)
+            ? extractErrorCode(payload.error)
+            : undefined;
           const msg = mapErrorCodeToMessage(code, "Ошибка входа");
           throw new Error(msg);
         }
-        handleAuthSuccess(payload as ApiOk);
-        return;
+
+        handleAuthSuccess(payload);
       }
     } catch (e: unknown) {
       if (stubMode === "fallback") {
-        console.warn("[Register] fallback → исключение/сеть, имитируем успех");
         await simulateSuccess();
       } else {
-        setServerError(e instanceof Error ? e.message : "Unexpected error");
+        // e.message может содержать код вроде "invalid_credentials" / "validation_error" / "http_400"
+        const msg = e instanceof Error ? e.message : undefined;
+        const code = asApiErrCode(msg);
+        const fallback =
+          mode === "signin" ? "Ошибка входа" : "Ошибка регистрации";
+        setServerError(mapErrorCodeToMessage(code, fallback));
       }
     } finally {
       setLoading(false);

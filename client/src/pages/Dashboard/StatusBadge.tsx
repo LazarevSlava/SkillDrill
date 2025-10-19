@@ -6,7 +6,7 @@ export default function StatusBadge({
   const map = {
     draft: {
       label: "Черновик",
-      tone: "bg-yellow-100 border-yellow-400",
+      tone: "bg-brand-yellow/20 border-brand-yellow/50",
     },
     scheduled: {
       label: "Запланировано",
