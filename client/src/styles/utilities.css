@@ -1,5 +1,4 @@
 /* мелкие утилиты/хелперы */
-/* src/styles/utilities.css */
 @layer utilities {
   .text-balance {
     text-wrap: balance;

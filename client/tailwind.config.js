@@ -18,14 +18,10 @@ export default {
         card: "var(--shadow-card)",
         soft: "var(--shadow-soft)",
       },
-      borderRadius: {
-        "2xl": "1rem", // это дефолт Tailwind
-      },
       maxWidth: {
         container: "var(--container-max)",
       },
       fontFamily: {
-        // --font-sans в tokens.css
         sans: ["var(--font-sans)"],
       },
       container: {
@@ -35,6 +31,4 @@ export default {
       },
     },
   },
-  safelist: ["bg-yellow-100", "border-yellow-400"],
-  plugins: [],
 };

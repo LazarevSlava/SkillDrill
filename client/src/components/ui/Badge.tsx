@@ -9,7 +9,7 @@ const map = {
   neutral: "badge",
   info: "badge bg-brand-light/60 text-brand-deep",
   success: "badge bg-green-100 text-green-800",
-  warning: "badge bg-yellow-100 text-yellow-800",
+  warning: "badge bg-brand-yellow/20 text-brand-dark",
 };
 export default function Badge({
   intent = "neutral",

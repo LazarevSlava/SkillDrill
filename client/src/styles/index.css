@@ -1,8 +1,7 @@
-/* 1) токены */
 @import "./tokens.css";
-/* 2) утилиты (здесь объявлен .shadow-card) */
+
 @import "./utilities.css";
-/* 3) компоненты (тут уже можно @apply shadow-card) */
+
 @import "./components.css";
 
 /* Tailwind слои */
@@ -10,7 +9,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* базовая высота */
 @layer base {
   html,
   body,
