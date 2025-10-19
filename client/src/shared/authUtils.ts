@@ -1,3 +1,4 @@
+// client/src/shared/authUtils.ts
 import { ApiErrCode, ApiErrorField } from "./authTypes";
 
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -38,16 +39,77 @@ export function mapErrorCodeToMessage(
   }
 }
 
-// Единый fetch с JSON + cookie
+/** Безопасный парсинг JSON: на выходе unknown (или исходная строка при ошибке). */
+function safeParse(text: string): unknown {
+  if (!text) return {};
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    return text;
+  }
+}
+
+/** Аккуратно достаём код ошибки из неизвестного ответа без обращения к произвольным полям объекта. */
+function pickErrorCode(u: unknown): string | undefined {
+  if (typeof u !== "object" || u === null) return undefined;
+  const o = u as Record<string, unknown>;
+  if (typeof o.error === "string") return o.error;
+  if (typeof o.code === "string") return o.code;
+  return undefined;
+}
+
+/** Типизированная ошибка HTTP вместо наращивания полей на Error через `any`. */
+export class HttpError extends Error {
+  readonly status: number;
+  readonly payload: unknown;
+
+  constructor(message: string, status: number, payload: unknown) {
+    super(message);
+    this.name = "HttpError";
+    this.status = status;
+    this.payload = payload;
+  }
+}
+
 export async function jsonFetch<T>(
-  input: RequestInfo | URL,
-  init?: RequestInit,
+  url: string,
+  init: RequestInit = {},
 ): Promise<T> {
-  const res = await fetch(input, {
+  const method = (init.method || "GET").toUpperCase();
+
+  // Готовим тело: если прилетел объект — превратим в строку
+  let body: BodyInit | undefined = init.body as BodyInit | undefined;
+  if (body && typeof body !== "string") {
+    try {
+      body = JSON.stringify(body);
+    } catch {
+      // Не падаем на циклических структурах — отправим как есть (или можешь поставить throw)
+      body = undefined;
+    }
+  }
+
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+    ...(init.headers || {}),
+  };
+
+  const request: RequestInit = {
     ...init,
-    headers: { "Content-Type": "application/json", ...(init?.headers || {}) },
+    method,
     credentials: "include",
-  });
-  const data = (await res.json().catch(() => ({}))) as T;
-  return data;
+    headers,
+    body,
+  };
+
+  const res = await fetch(url, request);
+  const text = await res.text();
+  const data: unknown = safeParse(text);
+
+  if (!res.ok) {
+    const code = pickErrorCode(data) ?? `http_${res.status}`;
+    throw new HttpError(code, res.status, data);
+  }
+
+  // На этом уровне мы доверяем дженерику T и приводим unknown → T
+  return data as T;
 }

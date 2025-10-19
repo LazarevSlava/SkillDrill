@@ -5,7 +5,7 @@ import Button from "../components/ui/Button";
 
 export type RegisterFormProps = {
   mode?: Mode;
-  onSuccess?: () => void; // если не задан, делаем navigate('/setup')
+  onSuccess?: () => void; // если не задан, useRegister решит сам
   stub?: "off" | "always" | "fallback";
   showBottomToggle?: boolean; // по умолчанию false
 };
@@ -26,40 +26,41 @@ export default function RegisterForm({
     errors,
     isSubmitting,
     usernameRequired,
-    onSubmit,
+    onSubmit, // ← используем только это, НИКАКИХ локальных apiLogin
   } = useRegister({ initialMode, onSuccess, stub });
 
-  // базовый класс поля ввода + подсветка ошибок
+  const isSignin = mode === "signin";
+
   const inputBase = "input";
   const invalid = "border-red-300 ring-2 ring-red-200 focus:ring-red-300";
 
   return (
     <div className="card p-6 mx-auto max-w-md">
-      {/* Верхний переключатель режимов */}
+      {/* Переключатель режимов */}
       <div className="mb-6 flex justify-center">
         <Button
           type="button"
-          variant={mode === "signin" ? "brand" : "outline"}
+          variant={isSignin ? "brand" : "outline"}
           className="rounded-r-none"
           onClick={() => setMode("signin")}
-          aria-pressed={mode === "signin"}
+          aria-pressed={isSignin}
           disabled={loading || isSubmitting}
         >
           Sign In
         </Button>
         <Button
           type="button"
-          variant={mode === "signup" ? "brand" : "outline"}
+          variant={!isSignin ? "brand" : "outline"}
           className="rounded-l-none"
           onClick={() => setMode("signup")}
-          aria-pressed={mode === "signup"}
+          aria-pressed={!isSignin}
           disabled={loading || isSubmitting}
         >
           Sign Up
         </Button>
       </div>
 
-      {/* Соц-кнопки (заглушки) */}
+      {/* Соц-заглушки */}
       <div className="mb-6 flex flex-col gap-3">
         <Button type="button" variant="outline" disabled className="w-full">
           Continue with Google
@@ -81,9 +82,16 @@ export default function RegisterForm({
         <hr className="flex-grow border-brand-light/40 dark:border-neutral-700" />
       </div>
 
-      {/* Форма */}
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3">
-        {mode === "signup" && (
+      {/* Форма — только handleSubmit(onSubmit) */}
+      <form
+        onSubmit={handleSubmit((vals) => {
+          return onSubmit(vals); // пробрасываем как было
+        })}
+        className="flex flex-col gap-3"
+      >
+        {" "}
+        {/* В signup дополнительно спрашиваем Username */}
+        {!isSignin && (
           <>
             <label
               htmlFor="username"
@@ -104,42 +112,43 @@ export default function RegisterForm({
             />
             {errors.username && (
               <span className="text-sm text-red-600">
-                {errors.username.message}
+                {errors.username.message as string}
               </span>
             )}
           </>
         )}
-
+        {/* В signin поле ввода остаётся 'email' по типам формы,
+            но useRegister сам соберёт name = username ?? email */}
         <label
-          htmlFor="email"
+          htmlFor="emailOrName"
           className="text-sm font-medium text-brand-dark dark:text-brand-white"
         >
-          {mode === "signin" ? "Username" : "Email"}
+          {isSignin ? "Username" : "Email"}
         </label>
         <input
-          id="email"
-          type={mode === "signin" ? "text" : "email"}
+          id="emailOrName"
+          type={isSignin ? "text" : "email"}
           className={`${inputBase} ${errors.email ? invalid : ""}`}
-          placeholder={mode === "signin" ? "your_username" : "you@example.com"}
+          placeholder={isSignin ? "your_username" : "you@example.com"}
           {...register("email", {
-            required:
-              mode === "signin" ? "Username is required" : "Email is required",
-            ...(mode === "signup"
-              ? {
+            required: isSignin ? "Username is required" : "Email is required",
+            ...(isSignin
+              ? {}
+              : {
                   pattern: {
                     value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
                     message: "Invalid email format",
                   },
-                }
-              : {}),
+                }),
           })}
           disabled={loading || isSubmitting}
-          autoComplete={mode === "signin" ? "username" : "email"}
+          autoComplete={isSignin ? "username" : "email"}
         />
         {errors.email && (
-          <span className="text-sm text-red-600">{errors.email.message}</span>
+          <span className="text-sm text-red-600">
+            {errors.email.message as string}
+          </span>
         )}
-
         <label
           htmlFor="password"
           className="text-sm font-medium text-brand-dark dark:text-brand-white"
@@ -156,35 +165,32 @@ export default function RegisterForm({
             minLength: { value: 6, message: "Min length is 6" },
           })}
           disabled={loading || isSubmitting}
-          autoComplete={mode === "signin" ? "current-password" : "new-password"}
+          autoComplete={isSignin ? "current-password" : "new-password"}
         />
         {errors.password && (
           <span className="text-sm text-red-600">
-            {errors.password.message}
+            {errors.password.message as string}
           </span>
         )}
-
         {serverError && (
           <div className="text-sm text-red-600" role="alert" aria-live="polite">
             {serverError}
           </div>
         )}
-
         <Button
           type="submit"
-          variant="primary" // жёлтый CTA
+          variant="primary"
           className="w-full"
           disabled={loading || isSubmitting}
           isLoading={loading || isSubmitting}
         >
-          {mode === "signup" ? "Create account" : "Sign in"}
+          {isSignin ? "Sign in" : "Create account"}
         </Button>
       </form>
 
-      {/* Нижний переключатель — опционально */}
       {showBottomToggle && (
         <p className="mt-3 text-center text-sm text-brand-gray-blue dark:text-neutral-400">
-          {mode === "signup" ? (
+          {!isSignin ? (
             <>
               Уже есть аккаунт?{" "}
               <Button
