@@ -36,6 +36,15 @@ ssh -i ~/.ssh/id_rsa_hetzner deployer@49.12.110.251
 cd /opt/skilldrill
 git pull origin main
 
+# restart server
+
+docker compose down
+docker compose up -d --build
+
+# check
+
+docker compose ps
+
 ```bash
 ssh -i ~/.ssh/id_rsa_hetzner -N -L 27019:127.0.0.1:27017 deployer@49.12.110.251
 
@@ -174,5 +183,8 @@ tree -L 6 -I 'node_modules|.git|dist|build|.next|.turbo|coverage|*.log|.DS_Store
 npm run lint
 ## prittier
 npm run format
+## cimmit git
+git add .
+git commit -m "???"
 
 ```
