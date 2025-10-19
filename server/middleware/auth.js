@@ -1,15 +1,21 @@
+// server/middleware/auth.js
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const { COOKIE_NAME } = require("../utils/auth");
 
 module.exports = async function auth(req, res, next) {
   try {
-    const token = req.cookies && req.cookies.auth;
+    const cookieToken = req.cookies?.[COOKIE_NAME];
+    const hdr = req.headers.authorization || "";
+    const bearerToken = hdr.startsWith("Bearer ") ? hdr.slice(7) : undefined;
+
+    const token = cookieToken || bearerToken;
     if (!token) {
       return res.status(401).json({ ok: false, error: "unauthorized" });
     }
 
     const payload = jwt.verify(token, process.env.JWT_SECRET);
-    if (!payload || !payload.userId) {
+    if (!payload?.userId) {
       return res.status(401).json({ ok: false, error: "unauthorized" });
     }
 
