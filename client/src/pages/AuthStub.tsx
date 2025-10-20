@@ -1,10 +1,11 @@
 // client/src/pages/AuthStub.tsx
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import Section from "../components/ui/Section";
 import { useState } from "react";
 import { apiLogin } from "../shared/authApi";
 
 export default function AuthStub() {
+  const navigate = useNavigate();
   const { mode: rawMode } = useParams();
   const mode = (rawMode ?? "").toLowerCase(); // на всякий случай
   const isLogin = mode === "login";
@@ -38,7 +39,8 @@ export default function AuthStub() {
       setBusy(true);
       const res = await apiLogin({ name: finalName, password: finalPassword });
       console.log("LOGIN_OK", res);
-      // TODO: navigate("/dashboard");
+
+      navigate("/dashboard", { replace: true });
     } catch (e: unknown) {
       console.error("LOGIN_FAIL", e);
       const msg =

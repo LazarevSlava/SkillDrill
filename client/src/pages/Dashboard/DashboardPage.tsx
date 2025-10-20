@@ -127,40 +127,55 @@ export default function DashboardPage() {
 
   // ————— маппинги под SessionCardData —————
 
+  function toTopics(val: unknown): string[] {
+    if (Array.isArray(val)) return val.filter(Boolean).map(String);
+    if (typeof val === "string" && val.trim()) {
+      // поддержим строки формата "js, react typescript"
+      return val.split(/[,\s]+/).filter(Boolean);
+    }
+    return [];
+  }
+
+  // --- sessions -> UI
   const userSessionsUI: SessionCardData[] = sessions.map(
-    (s): SessionCardData => ({
-      id: s._id,
-      title: s.snapshot.title,
-      language: inferLanguageFromTopics(s.snapshot.topics),
-      level: s.snapshot.position,
-      difficulty: s.snapshot.difficulty,
-      durationMin: toDuration(Number(s.snapshot.durationMin)),
-      scheduledAt: s.scheduledAt ?? undefined, // строка | undefined
-      status: mapStatus(s.status),
-      // Дополнительные (необязательные) поля для карточки
-      tags: [...s.snapshot.topics],
-      isTemplate: false,
-      onStart: () => handleStart(s._id),
-      onEdit: () => {}, // пока заглушка
-    }),
+    (s): SessionCardData => {
+      const topics = toTopics(s.snapshot?.topics);
+      return {
+        id: s._id,
+        title: s.snapshot?.title ?? "Без названия",
+        language: inferLanguageFromTopics(topics),
+        level: s.snapshot?.position,
+        difficulty: s.snapshot?.difficulty,
+        durationMin: toDuration(Number(s.snapshot?.durationMin)),
+        scheduledAt: s.scheduledAt ?? undefined,
+        status: mapStatus(s.status),
+        tags: topics,
+        isTemplate: false,
+        onStart: () => handleStart(s._id),
+        onEdit: () => {},
+      };
+    },
   );
 
+  // --- templates -> UI
   const presetTemplatesUI: SessionCardData[] = templates.map(
-    (t): SessionCardData => ({
-      id: t._id,
-      title: t.title,
-      language: inferLanguageFromTopics(t.topics),
-      level: t.position,
-      difficulty: t.difficulty,
-      durationMin: toDuration(Number(t.durationMin)),
-      scheduledAt: undefined,
-      lastRunAt: undefined,
-      status: "draft",
-      // Доп. поля
-      tags: [...t.topics],
-      isTemplate: true,
-      onCreateFromTemplate: () => handleCreateFromTemplate(t._id),
-    }),
+    (t): SessionCardData => {
+      const topics = toTopics(t?.topics);
+      return {
+        id: t._id,
+        title: t.title ?? "Шаблон",
+        language: inferLanguageFromTopics(topics),
+        level: t.position,
+        difficulty: t.difficulty,
+        durationMin: toDuration(Number(t.durationMin)),
+        scheduledAt: undefined,
+        lastRunAt: undefined,
+        status: "draft",
+        tags: topics,
+        isTemplate: true,
+        onCreateFromTemplate: () => handleCreateFromTemplate(t._id),
+      };
+    },
   );
 
   return (

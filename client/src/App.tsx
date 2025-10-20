@@ -48,19 +48,6 @@ function SetupOnly({ children }: { children: ReactNode }): ReactElement | null {
   );
 }
 
-function OnboardingGate({
-  children,
-}: {
-  children: ReactNode;
-}): ReactElement | null {
-  // Если сетап не завершён — ведём в мастер
-  return isSetupCompleted() ? (
-    <>{children}</>
-  ) : (
-    <Navigate to="/setup" replace />
-  );
-}
-
 // --- App Router ---
 export default function App(): ReactElement {
   return (
@@ -92,9 +79,7 @@ export default function App(): ReactElement {
           path="/dashboard"
           element={
             <RequireAuth>
-              <OnboardingGate>
-                <DashboardPage />
-              </OnboardingGate>
+              <DashboardPage />
             </RequireAuth>
           }
         />
