@@ -63,13 +63,18 @@ export default function DashboardPage() {
     (async () => {
       try {
         setLoading(true);
-        const [tplRes, sesRes] = await Promise.all([
-          fetchSessionTemplates(),
-          fetchSessions(),
-        ]);
-        if (!alive) return;
-        setTemplates(tplRes.items);
-        setSessions(sesRes.items);
+        try {
+          const tplRes = await fetchSessionTemplates(); // Promise<SessionTemplate[]>
+          const sesRes = await fetchSessions(); // Promise<{ items: SessionItem[] }>
+          setTemplates(tplRes);
+          setSessions(sesRes.items);
+
+          console.debug("[templates]", tplRes);
+        } catch (e) {
+          console.error("[Dashboard] load error:", e);
+        } finally {
+          setLoading(false);
+        }
       } catch (e) {
         console.error("[Dashboard] load error:", e);
       } finally {
