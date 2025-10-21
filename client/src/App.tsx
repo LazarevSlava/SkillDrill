@@ -8,6 +8,8 @@ import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 
 import SetupPage from "./pages/Setup/SetupPage";
+import NewSessionPage from "./pages/Setup/NewSessionPage"; // новый файл-обёртка
+
 import TopicsStep from "./features/setup/steps/TopicsStep";
 import SessionStep from "./features/setup/steps/SessionStep";
 import PreferencesStep from "./features/setup/steps/PreferencesStep";
@@ -20,9 +22,6 @@ const isAuthed = () => true;
 
 // ----- layout с фоном/темой/базовой типографикой -----
 function RootLayout(): ReactElement {
-  // app-bg — наши фоновые градиенты из components.css
-  // min-h-dvh — тянем фон на всю высоту вьюпорта
-  // text-brand-dark / dark:text-brand-white — базовый цвет текста из токенов
   return (
     <div className="app-bg min-h-dvh text-brand-dark dark:text-brand-white">
       <Outlet />
@@ -40,7 +39,6 @@ function RequireAuth({
 }
 
 function SetupOnly({ children }: { children: ReactNode }): ReactElement | null {
-  // Если сетап завершён — ведём на /dashboard
   return isSetupCompleted() ? (
     <Navigate to="/dashboard" replace />
   ) : (
@@ -56,7 +54,7 @@ export default function App(): ReactElement {
       <Route element={<RootLayout />}>
         <Route path="/" element={<LandingPage />} />
 
-        {/* Мастер настройки */}
+        {/* Мастер первичной настройки */}
         <Route
           path="/setup"
           element={
@@ -72,6 +70,22 @@ export default function App(): ReactElement {
           <Route path="session" element={<SessionStep />} />
           <Route path="preferences" element={<PreferencesStep />} />
           <Route path="review" element={<ReviewStep />} />
+        </Route>
+
+        {/* Создание НОВОЙ сессии (отдельный флоу, без SetupOnly) */}
+        <Route
+          path="/sessions/new"
+          element={
+            <RequireAuth>
+              <NewSessionPage />
+            </RequireAuth>
+          }
+        >
+          <Route index element={<Navigate to="topics" replace />} />
+          <Route path="topics" element={<TopicsStep />} />
+          <Route path="session" element={<SessionStep />} />
+          <Route path="preferences" element={<PreferencesStep />} />
+          <Route path="review" element={<ReviewStep mode="create-session" />} />
         </Route>
 
         {/* ЛК после онбординга */}

@@ -1,4 +1,6 @@
 import * as React from "react";
+import { useNavigate } from "react-router-dom";
+
 import DashboardSidebar from "./DashboardSidebar";
 import ProgressOverview from "./ProgressOverview";
 import SessionCard from "./SessionCard";
@@ -12,13 +14,15 @@ import {
 } from "../../pages/Dashboard/selectors/toSessionCardData";
 
 export default function DashboardPage() {
+  const navigate = useNavigate();
+
   const {
     templates,
     sessions,
     loading,
     busy,
     handleCreateFromTemplate,
-    handleCreateCustom,
+    // handleCreateCustom, // больше не используем
     handleStart,
   } = useDashboardData();
 
@@ -43,7 +47,7 @@ export default function DashboardPage() {
         <div className="flex flex-col gap-6">
           <DashboardHeader
             creatingNew={busy === "new"}
-            onCreateNew={handleCreateCustom}
+            onCreateNew={() => navigate("/sessions/new/topics")}
           />
 
           {/* counters из summary */}
