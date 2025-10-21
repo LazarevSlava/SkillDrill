@@ -4,6 +4,7 @@ import { useNavigate, useOutletContext } from "react-router-dom";
 import type { SetupForm } from "../../../features/setup/useSetupForm";
 import { ALL_TOPICS } from "../../../features/setup/useSetupForm";
 import Button from "../../../components/ui/Button";
+import * as React from "react";
 
 type Ctx = { go: (to: string) => void };
 
@@ -11,13 +12,27 @@ export default function TopicsStep() {
   const { watch, setValue, formState, trigger } = useFormContext<SetupForm>();
   const nav = useNavigate();
   const { go } = useOutletContext<Ctx>();
-  const topics = watch("topics");
+
+  // Можем получить undefined на первом рендере → страхуемся
+  const rawTopics = watch("topics");
+  const topics: string[] = Array.isArray(rawTopics) ? rawTopics : [];
+
+  // Если RHF ещё не инициализировал поле — выставим пустой массив один раз
+  React.useEffect(() => {
+    if (!Array.isArray(rawTopics)) {
+      setValue("topics", [], { shouldValidate: false, shouldDirty: false });
+    }
+  }, [rawTopics, setValue]);
 
   function toggle(t: (typeof ALL_TOPICS)[number]) {
     const has = topics.includes(t);
-    setValue("topics", has ? topics.filter((x) => x !== t) : [...topics, t], {
-      shouldValidate: true,
-    });
+    setValue(
+      "topics",
+      (has
+        ? topics.filter((x) => x !== t)
+        : [...topics, t]) as SetupForm["topics"],
+      { shouldValidate: true },
+    );
   }
 
   async function next() {
@@ -66,7 +81,9 @@ export default function TopicsStep() {
 
         {formState.errors.topics && (
           <p className="mt-2 text-sm text-red-600">
-            {formState.errors.topics.message as string}
+            {String(
+              formState.errors.topics.message ?? "Выбери хотя бы одну тему",
+            )}
           </p>
         )}
       </section>

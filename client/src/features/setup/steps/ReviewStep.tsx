@@ -5,11 +5,23 @@ import Button from "../../../components/ui/Button";
 import { finalizeSetup } from "../../../features/setup/useSetupForm";
 
 // --- режим create-session ---
-import { loadNewSession, clearNewSession } from "../newSessionStorage";
-import { createSession } from "../../../api/sessions";
-import type { NewSessionData } from "../newSessionStorage";
+import {
+  loadNewSession,
+  saveNewSession,
+  clearNewSession,
+} from "../newSessionStorage";
 
-// Тип, чтобы явно контролировать поведение
+// API: создаём юзер-шаблон, затем сессию из него
+import { createUserTemplate } from "../../../api/userTemplates";
+import { createSessionFromTemplate } from "../../../api/sessions";
+
+import { useFormContext } from "react-hook-form";
+import type { NewSessionData } from "../newSessionStorage";
+import type { SetupFormInput } from "../../../features/setup/useSetupForm";
+
+/* ===========================
+   Пропс режима
+================================ */
 type Props = {
   mode?: "onboarding" | "create-session";
 };
@@ -23,17 +35,13 @@ export default function ReviewStep({ mode = "onboarding" }: Props) {
 }
 
 /* ===========================
-   РЕЖИМ: ONBOARDING (/setup/*)
-   — внутри есть FormProvider, поэтому используем useFormContext
+   ONBOARDING (/setup/*)
 ================================ */
-import { useFormContext } from "react-hook-form";
-import type { SetupFormInput } from "../../../features/setup/useSetupForm";
-
 function OnboardingReview() {
   const { getValues, handleSubmit } = useFormContext<SetupFormInput>();
   const nav = useNavigate();
 
-  const v = getValues(); // снимок текущих значений формы
+  const v = getValues();
 
   const onSubmit = handleSubmit(() => {
     finalizeSetup();
@@ -70,12 +78,91 @@ function OnboardingReview() {
 }
 
 /* ===========================
-   РЕЖИМ: CREATE SESSION (/sessions/new/*)
-   — FormProvider может отсутствовать, поэтому НЕЛЬЗЯ звать useFormContext
-   — источник данных: newSessionStorage
+   CREATE SESSION (/sessions/new/*)
 ================================ */
 type Duration = 15 | 30 | 60;
 const toDuration = (n: number): Duration => (n <= 15 ? 15 : n <= 30 ? 30 : 60);
+
+// ---- нормализации и типы ----
+function normalizePosition(p: unknown): "Junior" | "Middle" | "Senior" {
+  const s = String(p || "").toLowerCase();
+  if (s === "junior") return "Junior";
+  if (s === "senior") return "Senior";
+  return "Middle";
+}
+
+const TOPIC_CANON: Record<string, string> = {
+  javascript: "JavaScript",
+  js: "JavaScript",
+  typescript: "TypeScript",
+  ts: "TypeScript",
+  python: "Python",
+  react: "React",
+  "node.js": "Node.js",
+  nodejs: "Node.js",
+  node: "Node.js",
+};
+
+function normalizeTopic(t: unknown): string | null {
+  if (typeof t !== "string") return null;
+  const raw = t.trim();
+  if (!raw) return null;
+  const key = raw.toLowerCase();
+  return TOPIC_CANON[key] ?? raw[0].toUpperCase() + raw.slice(1);
+}
+
+function cleanTopics(topics: unknown): string[] {
+  if (!Array.isArray(topics)) return [];
+  const canon = topics
+    .map(normalizeTopic)
+    .filter((x): x is string => Boolean(x));
+  return Array.from(new Set(canon));
+}
+
+function normalizeLevel(lvl: unknown): "easy" | "medium" | "hard" {
+  const s = String(lvl || "").toLowerCase();
+  return s === "easy" || s === "hard" ? (s as "easy" | "hard") : "medium";
+}
+
+function isEmptyObject(o: unknown): boolean {
+  return (
+    !!o &&
+    typeof o === "object" &&
+    Object.keys(o as Record<string, unknown>).length === 0
+  );
+}
+
+// контракт user-template
+type CreateUserTemplateBody = {
+  title: string;
+  topics: string[];
+  durationMin: 15 | 30 | 60;
+  difficulty: "easy" | "medium" | "hard";
+  position: "Junior" | "Middle" | "Senior";
+  meta?: Record<string, unknown>;
+};
+
+type CreateUserTemplateResponse = {
+  item: { _id: string };
+};
+
+// безопасный разбор ошибок API без any
+type ApiErrorLike = {
+  message?: string;
+  data?: { error?: string; message?: string };
+  response?: { data?: { error?: string; message?: string } };
+};
+
+function getApiMessage(err: unknown): string {
+  const e = err as ApiErrorLike | undefined;
+  return (
+    e?.message ??
+    e?.data?.error ??
+    e?.response?.data?.error ??
+    e?.response?.data?.message ??
+    "Не удалось выполнить запрос."
+  );
+}
 
 const NEW_SESSION_DEFAULTS: NewSessionData = {
   title: "",
@@ -93,9 +180,8 @@ function CreateSessionReview() {
 
   const payload: NewSessionData = loadNewSession() ?? NEW_SESSION_DEFAULTS;
 
-  // Приводим значения и выставляем дефолты, чтобы не ломать строгие типы API
   const {
-    title,
+    title: storedTitle,
     topics,
     duration,
     level,
@@ -103,34 +189,77 @@ function CreateSessionReview() {
     preferences = {},
   } = payload;
 
-  const safePosition: "Junior" | "Middle" | "Senior" = position ?? "Junior";
+  const topicsCanon = cleanTopics(topics);
+  const durationClean = toDuration(Number(duration));
+  const levelClean = normalizeLevel(level);
+  const safePosition: "Junior" | "Middle" | "Senior" =
+    normalizePosition(position);
 
-  const canSubmit =
-    title.trim().length > 0 &&
-    Array.isArray(topics) &&
-    topics.length > 0 &&
-    Number(duration) > 0;
+  // автотайтл из канонических тем/параметров
+  const autoTitle = React.useMemo(() => {
+    const t = topicsCanon.length ? topicsCanon.join(" / ") : "Custom";
+    const dur = durationClean || 30;
+    const lvl = levelClean;
+    const pos = safePosition;
+    return `${t} • ${dur} мин • ${lvl} • ${pos}`;
+  }, [topicsCanon, durationClean, levelClean, safePosition]);
+
+  const [title, setTitle] = React.useState<string>(
+    (storedTitle || "").trim() || autoTitle,
+  );
+
+  React.useEffect(() => {
+    if (!storedTitle || storedTitle.trim().length === 0) {
+      setTitle(autoTitle);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoTitle]);
+
+  React.useEffect(() => {
+    saveNewSession({ title });
+  }, [title]);
+
+  const canSubmit = topicsCanon.length > 0 && Boolean(durationClean);
+  const computedTitle = (title || "").trim() || autoTitle;
 
   const handleCreate = async () => {
     setErr(null);
+
     if (!canSubmit) {
-      setErr("Заполни минимум: темы, длительность и название.");
+      setErr("Заполни минимум: темы и длительность.");
       return;
     }
+
+    // 1) создаём пользовательский шаблон
+    const templateBody: CreateUserTemplateBody = {
+      title: computedTitle,
+      topics: topicsCanon,
+      durationMin: durationClean,
+      difficulty: levelClean,
+      position: safePosition,
+      ...(preferences && !isEmptyObject(preferences)
+        ? { meta: preferences as Record<string, unknown> }
+        : {}),
+    };
+
     try {
       setSubmitting(true);
-      await createSession({
-        title: title.trim(),
-        topics,
-        duration: toDuration(Number(duration)),
-        level,
-        position: safePosition,
-        preferences,
-      });
+
+      const tplUnknown = await createUserTemplate(templateBody);
+      const tplRes = tplUnknown as unknown as CreateUserTemplateResponse;
+
+      const templateId = tplRes?.item?._id;
+      if (!templateId) {
+        throw new Error("Не удалось создать шаблон (пустой templateId).");
+      }
+
+      // 2) создаём сессию из пользовательского шаблона
+      await createSessionFromTemplate(templateId, "user");
+
       clearNewSession();
       nav("/dashboard");
-    } catch {
-      setErr("Не удалось создать сессию. Повтори попытку.");
+    } catch (e: unknown) {
+      setErr(getApiMessage(e));
     } finally {
       setSubmitting(false);
     }
@@ -142,12 +271,28 @@ function CreateSessionReview() {
         Проверь настройки новой сессии
       </h2>
 
+      {/* Редактируемое название */}
+      <div className="grid gap-2">
+        <label className="text-sm text-brand-dark dark:text-neutral-300">
+          Название сессии
+        </label>
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Например: Python / React • 30 мин • medium • Middle"
+          className="w-full rounded-lg border border-brand-light bg-white/60 px-3 py-2
+                     focus:outline-none focus:ring-2 focus:ring-brand-light
+                     dark:bg-neutral-900 dark:border-neutral-700"
+        />
+      </div>
+
       <DetailsList
-        title={title}
-        topics={topics}
-        duration={duration}
-        level={level}
-        position={position}
+        title={computedTitle}
+        topics={topicsCanon}
+        duration={durationClean}
+        level={levelClean}
+        position={safePosition}
       />
 
       {err && (
