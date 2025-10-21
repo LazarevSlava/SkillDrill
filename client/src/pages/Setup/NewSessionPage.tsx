@@ -8,6 +8,8 @@ import {
   type NewSessionData,
 } from "../../features/setup/newSessionStorage";
 import { createSession } from "../../api/sessions";
+import Section from "../../components/ui/Section";
+import Card from "../../components/ui/Card";
 
 const DEFAULTS: NewSessionData = {
   topics: [],
@@ -26,7 +28,7 @@ export default function NewSessionPage() {
     defaultValues: loadNewSession() ?? DEFAULTS,
   });
 
-  // авто-сейв в localStorage при любых изменениях
+  // авто-сейв в localStorage
   React.useEffect(() => {
     const sub = methods.watch((val) => {
       saveNewSession(val as Partial<NewSessionData>);
@@ -34,26 +36,34 @@ export default function NewSessionPage() {
     return () => sub.unsubscribe();
   }, [methods]);
 
-  // сабмит финального шага
+  // совместимый go для шагов (как раньше давал SetupPage)
+  const go = React.useCallback((to: string) => navigate(to), [navigate]);
+
+  // финальный сабмит
   const onCreate = methods.handleSubmit(async (data) => {
     await createSession({
       title: data.title,
       topics: data.topics,
       duration: data.duration,
       level: data.level,
-      position: data.position ?? "Middle",
+      position: data.position ?? "Middle", // юнион совпадает
       preferences: data.preferences,
     });
     clearNewSession();
     navigate("/dashboard");
   });
 
-  // Передаём onCreate в дочерние шаги через Outlet context
   return (
     <FormProvider {...methods}>
-      <div className="min-h-dvh">
-        <Outlet context={{ onCreate }} />
-      </div>
+      <Section className="max-w-3xl">
+        <h1 className="mb-4 text-2xl md:text-3xl font-semibold text-brand-deep dark:text-brand-white">
+          Новая сессия
+        </h1>
+        <Card className="p-4 md:p-6">
+          {/* даём шагам и onCreate, и go */}
+          <Outlet context={{ onCreate, go }} />
+        </Card>
+      </Section>
     </FormProvider>
   );
 }

@@ -22,7 +22,7 @@ export default function TopicsStep() {
 
   async function next() {
     const ok = await trigger(["topics"]);
-    if (ok) (go ?? nav)("/setup/session");
+    if (ok) (go ?? nav)("/sessions/new/session");
   }
 
   return (

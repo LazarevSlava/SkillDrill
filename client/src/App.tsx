@@ -7,20 +7,19 @@ import AuthStub from "./pages/AuthStub";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 
-import SetupPage from "./pages/Setup/SetupPage";
-import NewSessionPage from "./pages/Setup/NewSessionPage"; // новый файл-обёртка
+// ——— создаём новую сессию (Единственный мастер) ———
+import NewSessionPage from "./pages/Setup/NewSessionPage";
 
+// шаги
 import TopicsStep from "./features/setup/steps/TopicsStep";
 import SessionStep from "./features/setup/steps/SessionStep";
 import PreferencesStep from "./features/setup/steps/PreferencesStep";
 import ReviewStep from "./features/setup/steps/ReviewStep";
 
-import { isSetupCompleted } from "./features/setup/storage";
-
-// Заглушка авторизации (позже заменим на реальную проверку JWT/куки)
+// Заглушка авторизации (позже заменим на JWT/куки)
 const isAuthed = () => true;
 
-// ----- layout с фоном/темой/базовой типографикой -----
+// ----- layout -----
 function RootLayout(): ReactElement {
   return (
     <div className="app-bg min-h-dvh text-brand-dark dark:text-brand-white">
@@ -29,7 +28,7 @@ function RootLayout(): ReactElement {
   );
 }
 
-// --- Guards ---
+// --- Guard ---
 function RequireAuth({
   children,
 }: {
@@ -38,41 +37,13 @@ function RequireAuth({
   return isAuthed() ? <>{children}</> : <Navigate to="/" replace />;
 }
 
-function SetupOnly({ children }: { children: ReactNode }): ReactElement | null {
-  return isSetupCompleted() ? (
-    <Navigate to="/dashboard" replace />
-  ) : (
-    <>{children}</>
-  );
-}
-
-// --- App Router ---
 export default function App(): ReactElement {
   return (
     <Routes>
-      {/* общий лэйаут с нашей фоновой заливкой и цветами */}
       <Route element={<RootLayout />}>
         <Route path="/" element={<LandingPage />} />
 
-        {/* Мастер первичной настройки */}
-        <Route
-          path="/setup"
-          element={
-            <RequireAuth>
-              <SetupOnly>
-                <SetupPage />
-              </SetupOnly>
-            </RequireAuth>
-          }
-        >
-          <Route index element={<Navigate to="topics" replace />} />
-          <Route path="topics" element={<TopicsStep />} />
-          <Route path="session" element={<SessionStep />} />
-          <Route path="preferences" element={<PreferencesStep />} />
-          <Route path="review" element={<ReviewStep />} />
-        </Route>
-
-        {/* Создание НОВОЙ сессии (отдельный флоу, без SetupOnly) */}
+        {/* Единственный мастер создания НОВОЙ сессии */}
         <Route
           path="/sessions/new"
           element={
@@ -88,7 +59,7 @@ export default function App(): ReactElement {
           <Route path="review" element={<ReviewStep mode="create-session" />} />
         </Route>
 
-        {/* ЛК после онбординга */}
+        {/* Дэшборд */}
         <Route
           path="/dashboard"
           element={

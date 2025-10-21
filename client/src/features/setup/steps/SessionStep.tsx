@@ -18,7 +18,7 @@ export default function SessionStep() {
 
   async function next() {
     const ok = await trigger(["duration", "level", "position"]);
-    if (ok) (go ?? nav)("/setup/preferences");
+    if (ok) (go ?? nav)("/sessions/new/preferences");
   }
 
   return (
@@ -101,7 +101,7 @@ export default function SessionStep() {
       </section>
 
       <div className="flex justify-between">
-        <Link to="/setup/topics" className="btn btn-outline">
+        <Link to="/sessions/new/topics" className="btn btn-outline">
           ← Назад
         </Link>
 

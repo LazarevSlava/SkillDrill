@@ -14,7 +14,7 @@ export default function PreferencesStep() {
 
   async function next() {
     const ok = await trigger(["tone", "focus", "voice"]);
-    if (ok) (go ?? nav)("/setup/review");
+    if (ok) (go ?? nav)("/sessions/new/review");
   }
 
   return (
@@ -89,7 +89,7 @@ export default function PreferencesStep() {
 
       <div className="flex justify-between">
         {/* Назад — используем Link как кнопку, без вложенного <button> */}
-        <Link to="/setup/session" className="btn btn-outline">
+        <Link to="/sessions/new/session" className="btn btn-outline">
           ← Назад
         </Link>
 
