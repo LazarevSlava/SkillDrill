@@ -1,19 +1,15 @@
-// server/routes/sessions.js
+// server/routes/sessionTemplates.js
 const express = require("express");
 const router = express.Router();
 const auth = require("../middleware/auth");
-const ctrl = require("../controllers/sessions");
-const runsCtrl = require("../controllers/runs");
+const ctrl = require("../controllers/sessionTemplates"); // <= ВАЖНО: свой контроллер
 
-// приватные
 router.use(auth);
 
-router.post("/", ctrl.create);
+// GET /session-templates -> { items: SessionTemplate[] }
 router.get("/", ctrl.list);
-router.get("/:id", ctrl.getOne);
-router.patch("/:id", ctrl.update);
 
-// СТАРТ прогона по сессии
-router.post("/:id/start", runsCtrl.start);
+// (опционально)
+router.get("/:id", ctrl.getOne);
 
 module.exports = router;

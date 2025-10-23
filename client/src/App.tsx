@@ -7,22 +7,20 @@ import AuthStub from "./pages/AuthStub";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 
-import SetupPage from "./pages/Setup/SetupPage";
+// ——— создаём новую сессию (Единственный мастер) ———
+import NewSessionPage from "./pages/Setup/NewSessionPage";
+
+// шаги
 import TopicsStep from "./features/setup/steps/TopicsStep";
 import SessionStep from "./features/setup/steps/SessionStep";
 import PreferencesStep from "./features/setup/steps/PreferencesStep";
 import ReviewStep from "./features/setup/steps/ReviewStep";
 
-import { isSetupCompleted } from "./features/setup/storage";
-
-// Заглушка авторизации (позже заменим на реальную проверку JWT/куки)
+// Заглушка авторизации (позже заменим на JWT/куки)
 const isAuthed = () => true;
 
-// ----- layout с фоном/темой/базовой типографикой -----
+// ----- layout -----
 function RootLayout(): ReactElement {
-  // app-bg — наши фоновые градиенты из components.css
-  // min-h-dvh — тянем фон на всю высоту вьюпорта
-  // text-brand-dark / dark:text-brand-white — базовый цвет текста из токенов
   return (
     <div className="app-bg min-h-dvh text-brand-dark dark:text-brand-white">
       <Outlet />
@@ -30,7 +28,7 @@ function RootLayout(): ReactElement {
   );
 }
 
-// --- Guards ---
+// --- Guard ---
 function RequireAuth({
   children,
 }: {
@@ -39,44 +37,18 @@ function RequireAuth({
   return isAuthed() ? <>{children}</> : <Navigate to="/" replace />;
 }
 
-function SetupOnly({ children }: { children: ReactNode }): ReactElement | null {
-  // Если сетап завершён — ведём на /dashboard
-  return isSetupCompleted() ? (
-    <Navigate to="/dashboard" replace />
-  ) : (
-    <>{children}</>
-  );
-}
-
-function OnboardingGate({
-  children,
-}: {
-  children: ReactNode;
-}): ReactElement | null {
-  // Если сетап не завершён — ведём в мастер
-  return isSetupCompleted() ? (
-    <>{children}</>
-  ) : (
-    <Navigate to="/setup" replace />
-  );
-}
-
-// --- App Router ---
 export default function App(): ReactElement {
   return (
     <Routes>
-      {/* общий лэйаут с нашей фоновой заливкой и цветами */}
       <Route element={<RootLayout />}>
         <Route path="/" element={<LandingPage />} />
 
-        {/* Мастер настройки */}
+        {/* Единственный мастер создания НОВОЙ сессии */}
         <Route
-          path="/setup"
+          path="/sessions/new"
           element={
             <RequireAuth>
-              <SetupOnly>
-                <SetupPage />
-              </SetupOnly>
+              <NewSessionPage />
             </RequireAuth>
           }
         >
@@ -84,17 +56,15 @@ export default function App(): ReactElement {
           <Route path="topics" element={<TopicsStep />} />
           <Route path="session" element={<SessionStep />} />
           <Route path="preferences" element={<PreferencesStep />} />
-          <Route path="review" element={<ReviewStep />} />
+          <Route path="review" element={<ReviewStep mode="create-session" />} />
         </Route>
 
-        {/* ЛК после онбординга */}
+        {/* Дэшборд */}
         <Route
           path="/dashboard"
           element={
             <RequireAuth>
-              <OnboardingGate>
-                <DashboardPage />
-              </OnboardingGate>
+              <DashboardPage />
             </RequireAuth>
           }
         />

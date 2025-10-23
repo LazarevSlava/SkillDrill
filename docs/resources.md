@@ -176,7 +176,7 @@ mongodb://root:<root_pass>@localhost:27019/skilldrill?authSource=admin
 ---
 
 ## просмотр структуры проекта где цифра это глубина
-tree -L 6 -I 'node_modules|.git|dist|build|.next|.turbo|coverage|*.log|.DS_Store'
+tree -L 7 -I 'node_modules|.git|dist|build|.next|.turbo|coverage|*.log|.DS_Store'
 
 
 ## lint

@@ -18,7 +18,6 @@ import type {
   Mode,
   ApiErrCode,
 } from "../shared/authTypes";
-import { isSetupCompleted } from "../features/setup/storage";
 
 export type UseRegisterOpts = {
   initialMode?: Mode;
@@ -97,8 +96,8 @@ export function useRegister({
       }
       return;
     }
-    const done = isSetupCompleted();
-    navigate(done ? "/dashboard" : "/setup", { replace: true });
+    // Всегда отправляем пользователя в дэшборд
+    navigate("/dashboard", { replace: true });
   };
 
   const simulateSuccess = async () => {

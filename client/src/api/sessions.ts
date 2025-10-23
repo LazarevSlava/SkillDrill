@@ -59,3 +59,15 @@ export interface StartSessionResponse {
 export function startSession(sessionId: string) {
   return api.post<StartSessionResponse>(`/sessions/${sessionId}/start`);
 }
+export interface CreateSessionBody {
+  title: string;
+  topics: string[];
+  duration: number;
+  level: "easy" | "medium" | "hard";
+  position: "Junior" | "Middle" | "Senior";
+  preferences?: JsonObject;
+}
+
+export function createSession(body: CreateSessionBody) {
+  return api.post<CreateSessionResponse, CreateSessionBody>("/sessions", body);
+}
