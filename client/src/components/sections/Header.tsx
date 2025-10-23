@@ -19,7 +19,7 @@ export default function Header({ onOpenSignup, onOpenLogin }: HeaderProps) {
       <div className="section flex items-center justify-between py-3">
         <a href="/" className="flex items-center gap-3">
           <img
-            src="../../../public/Logo_SkillDrill-64px.png"
+            src="../../../public/images/Logo_SkillDrill-64px.png"
             alt="SkillDrill logo"
             className="h-12 w-12"
           />
