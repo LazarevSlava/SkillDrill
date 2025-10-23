@@ -15,6 +15,7 @@ import TopicsStep from "./features/setup/steps/TopicsStep";
 import SessionStep from "./features/setup/steps/SessionStep";
 import PreferencesStep from "./features/setup/steps/PreferencesStep";
 import ReviewStep from "./features/setup/steps/ReviewStep";
+import InterviewPage from "./pages/Interview/InterviewPage";
 
 // Заглушка авторизации (позже заменим на JWT/куки)
 const isAuthed = () => true;
@@ -42,8 +43,7 @@ export default function App(): ReactElement {
     <Routes>
       <Route element={<RootLayout />}>
         <Route path="/" element={<LandingPage />} />
-
-        {/* Единственный мастер создания НОВОЙ сессии */}
+        <Route path="/interview" element={<InterviewPage />} />
         <Route
           path="/sessions/new"
           element={
